@@ -4,6 +4,7 @@ export {Background} from './layout/background.js';
 export {Border} from './layout/border.js';
 export {View} from './views/view.js';
 export {Button} from './views/button.js'
+export {TextField} from './views/textField.js'
 export {StackPanel} from './views/stackPanel.js'
 export {ViewElement} from './declarative/viewElement'
 export {ButtonElement} from './declarative/buttonElement'
