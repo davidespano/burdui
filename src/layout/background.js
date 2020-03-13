@@ -39,7 +39,7 @@ Object.assign( Background.prototype, {
         g.save();
         g.fillStyle = this.color;
         g.beginPath();
-        createRoundedRect(g, 10, this.bounds);
+        createRoundedRect(g, this.rounded, this.bounds);
         g.closePath();
         g.fill();
         g.restore();
