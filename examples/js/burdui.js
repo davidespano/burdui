@@ -4,22 +4,47 @@
 	(global = global || self, factory(global.burdui = {}));
 }(this, (function (exports) { 'use strict';
 
-	/**
-	 * @author Davide Spano
-	 */
+	const EventTypes = {
+	    paint: 0,
+	};
 
-	function App(canvas, tree){
-	    this.canvas = canvas;
-	    this.g = canvas.getContext('2d');
-	    this.tree = tree;
+	function Event(source, type, args){
+	    this.source = source;
+	    this.type = type;
+	    this.args = args;
 	}
 
-	Object.assign( App.prototype, {
-	    start : function(){
-	        if(this.tree != null){
-	            this.tree.paint(this.g);
-	        }
-	    }
+	Object.assign(Event.prototype, {
+
+
+	    // methods
+	    getSource : function(){
+	        return this.source;
+	    },
+
+	    setSource : function(source) {
+	        this.source = source;
+	        return this;
+	    },
+
+	    getType : function(){
+	        return this.type;
+	    },
+
+	    setType : function(type){
+	        this.type = type;
+	        return this;
+	    },
+
+	    getArgs : function(){
+	        return this.args;
+	    },
+
+	    setArgs : function(args){
+	        this.args = args;
+	        return this;
+	    },
+
 	});
 
 	/**
@@ -62,11 +87,157 @@
 	        return this;
 	    },
 
+	    /**
+	     * Calculates the intersection between two Bounds object,
+	     * which is the maximum rectangular area shared by both of them.
+	     * @param r the Bounds object to intersect
+	     * @returns {Bounds|null} a Bounds object representing the
+	     * intersection or null in case of error.
+	     */
+	    intersection : function(r){
+	        if (! r instanceof Bounds){
+	            return null;
+	        }
+	        let tx1 = this.x;
+	        let ty1 = this.y;
+	        let rx1 = r.x;
+	        let ry1 = r.y;
+	        let tx2 = tx1; tx2 += this.w;
+	        let ty2 = ty1; ty2 += this.h;
+	        let rx2 = rx1; rx2 += r.w;
+	        let ry2 = ry1; ry2 += r.h;
+	        if (tx1 < rx1) tx1 = rx1;
+	        if (ty1 < ry1) ty1 = ry1;
+	        if (tx2 > rx2) tx2 = rx2;
+	        if (ty2 > ry2) ty2 = ry2;
+	        tx2 -= tx1;
+	        ty2 -= ty1;
+	        return new Bounds(tx1, ty1, tx2, ty2);
+	    },
+
+	    /**
+	     * Calculates the union between two Bounds object,
+	     * which is the minimum rectangular area including  both of them.
+	     * @param r the Bounds object to unite
+	     * @returns {Bounds|null} a Bounds object representing the
+	     * union or null in case of error.
+	     */
+	    union: function(r){
+	        if (! r instanceof Bounds){
+	            return null;
+	        }
+	        let tx2 = this.w;
+	        let ty2 = this.h;
+	        if ((tx2 | ty2) < 0) {
+	            // This rectangle has negative dimensions...
+	            // we return the other Bounds object
+	            return new Bounds(r.x, r.y, r.w, r.h);
+	        }
+	        let rx2 = r.w;
+	        let ry2 = r.h;
+	        if ((rx2 | ry2) < 0) {
+	            return new Bounds(this.x, this.y, this.w, this.h);
+	        }
+	        let tx1 = this.x;
+	        let ty1 = this.y;
+	        tx2 += tx1;
+	        ty2 += ty1;
+	        let rx1 = r.x;
+	        let ry1 = r.y;
+	        rx2 += rx1;
+	        ry2 += ry1;
+	        if (tx1 > rx1) tx1 = rx1;
+	        if (ty1 > ry1) ty1 = ry1;
+	        if (tx2 < rx2) tx2 = rx2;
+	        if (ty2 < ry2) ty2 = ry2;
+	        tx2 -= tx1;
+	        ty2 -= ty1;
+	        return new Bounds(tx1, ty1, tx2, ty2);
+	    },
+
+	    /**
+	     * Checks whether a point is inside the Bounds or not
+	     * @param X the x coordinate of the point
+	     * @param Y the y coordinate of the point
+	     * @returns {boolean} true if the point is inside, false otherwise
+	     */
+	    contains : function(X, Y){
+	        let w = this.w;
+	        let h = this.h;
+	        if((w | h) < 0){
+	            return false;
+	        }
+	        let x = this.x;
+	        let y = this.y;
+	        if (X < x || Y < y){
+	            return false;
+	        }
+	        w += x;
+	        h += y;
+	        //      overflow || intersect
+	        return ((w < x || w > X) &&
+	                (h < y || h > Y));
+	    },
+
+
+
+
 	});
 
-	function createRoundedRect(g, rounded, bounds){
+	/**
+	 * @author Davide Spano
+	 */
+
+	function App(canvas, tree){
+	    this.canvas = canvas;
+	    this.g = canvas.getContext('2d');
+	    this.tree = tree;
+	    if(this.tree){
+	        this.tree.parent = this;
+	    }
+	    this.q = [];
+	}
+
+	Object.assign( App.prototype, {
+	    start : function(){
+	        if(this.tree != null){
+	            this.tree.paint(this.g);
+	        }
+	    },
+
+	    invalidate: function(r, source){
+	        let evt = new Event(source, EventTypes.paint, {bounds: r});
+	        this.q.push(evt);
+	    },
+
+	    flushQueue: function(){
+	        let damagedArea = new Bounds(0,0,-1,-1);
+
+	        while(this.q.length > 0){
+	            let evt = this.q.pop();
+	            switch(evt.type){
+	                case EventTypes.paint:
+	                    damagedArea = damagedArea.union(evt.args.bounds);
+	                    break;
+	            }
+	        }
+
+	        if(damagedArea.w > 0 && damagedArea.h > 0){
+	            this.tree.paint(this.g, damagedArea);
+	        }
+	    }
+
+	});
+
+	function createRoundedRect(g, rounded, b){
 	    const halfRadians = (2 * Math.PI)/2;
 	    const quarterRadians = (2 * Math.PI)/4;
+	    let bounds = new Bounds(
+	        b.x + g.lineWidth,
+	        b.y + g.lineWidth,
+	        b.w - 2 * g.lineWidth,
+	        b.h - 2 * g.lineWidth);
+	    g.beginPath();
 	    // top left arc
 	    g.arc(rounded + bounds.x,
 	        rounded + bounds.y,
@@ -98,6 +269,7 @@
 
 	    // line from top right to top left
 	    g.lineTo(bounds.x + rounded, bounds.y);
+	    g.closePath();
 	}
 
 	/**
@@ -133,11 +305,17 @@
 	        return this;
 	    },
 
-	    paint : function(g){
+	    paint : function(g, r){
 	        g.save();
+
+	        g.beginPath();
+	        g.rect(r.x, r.y, r.w, r.h);
+	        g.closePath();
+	        g.clip();
+
 	        g.fillStyle = this.color;
 	        g.beginPath();
-	        createRoundedRect(g, 10, this.bounds);
+	        createRoundedRect(g, this.rounded, this.bounds);
 	        g.closePath();
 	        g.fill();
 	        g.restore();
@@ -193,10 +371,13 @@
 	        return this.rounded;
 	    },
 
-	    paint : function(g){
+	    paint : function(g, r){
 
 
 	        g.save();
+	        g.beginPath();
+	        g.rect(r.x, r.y, r.w, r.h);
+	        g.clip();
 	        g.strokeStyle = this.color;
 	        g.lineWidth = this.lineWidth;
 	        createRoundedRect(g, this.rounded, this.bounds);
@@ -215,6 +396,7 @@
 	    this.name = "";
 	    this.children = [];
 	    this.isView = true;
+	    this.parent = null;
 	}
 
 	Object.assign(View.prototype, {
@@ -242,22 +424,38 @@
 	        }
 	        if(c.isView){
 	            this.children.push(c);
+	            c.parent = this;
 	        }
 	        return this;
 	    },
 
 
-	    paintChildren: function(g){
+	    paintChildren: function(g, b){
+	        let r = b || this.bounds;
+
 	        for(let c of this.children){
-	            g.save();
-	            g.translate(c.bounds.x, c.bounds.y);
-	            c.paint(g);
-	            g.restore();
+	            let intersection = c.bounds.intersection(r);
+	            if(intersection.w > 0 && intersection.h > 0){
+	                // the children is in the damaged area
+	                g.save();
+	                g.translate(c.bounds.x, c.bounds.y);
+	                intersection.setX(intersection.x - c.bounds.x);
+	                intersection.setY(intersection.y - c.bounds.y);
+	                c.paint(g, intersection);
+	                g.restore();
+	            }
 	        }
 	    },
 
-	    paint: function(g){
+	    paint: function(g, b){
+	        let r = b || this.bounds;
+
 	        g.save();
+	        // setting the clipping region. The view cannot draw outside its bounds
+	        g.beginPath();
+	        g.rect(r.x, r.y, r.w, r.h);
+	        g.clip();
+
 	        g.strokeStyle = "black";
 	        g.strokeRect(
 	            0,
@@ -265,16 +463,27 @@
 	            this.bounds.w,
 	            this.bounds.h);
 
-	        // setting the clipping region. The view cannot draw outside its bounds
-	        g.beginPath();
-	        g.rect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
-	        g.clip();
-
 	        // draw the children views.
-	        this.paintChildren(g);
+	        this.paintChildren(g,r);
 	        g.restore();
 
 	    },
+
+	    invalidate : function(r, source){
+	        source = source || this;
+	        if(this.parent != null){
+	            // move to the parent reference system
+	            let damagedArea = new Bounds(
+	                this.bounds.x + r.x,
+	                this.bounds.y + r.y,
+	                r.w, r.h);
+	            // intersect the requested area with the current bounds
+	            damagedArea = damagedArea.intersection(this.bounds);
+
+	            // bubble up the request to the parent
+	            this.parent.invalidate(damagedArea, source);
+	        }
+	    }
 	});
 
 	/**
@@ -346,8 +555,11 @@
 	        return this.color;
 	    },
 
-	    paint: function(g){
+	    paint: function(g, r){
 	        g.save();
+	        g.beginPath();
+	        g.rect(r.x, r.y, r.w, r.h);
+	        g.clip();
 	        g.font = this.font;
 	        g.fillStyle = this.color;
 	        g.textAlign = this.align;
@@ -436,6 +648,7 @@
 
 	    setBorderRounded: function(rounded){
 	        this.border.setRounded(rounded);
+	        this.background.setRounded(rounded);
 	        return this;
 	    },
 
@@ -461,10 +674,11 @@
 	        return this.text.getFont();
 	    },
 
-	    paint: function(g){
-	        this.background.paint(g);
-	        this.border.paint(g);
-	        this.text.paint(g);
+	    paint: function(g, r){
+	        r = r || this.bounds;
+	        this.background.paint(g, r);
+	        this.border.paint(g, r);
+	        this.text.paint(g, r);
 	    },
 	});
 

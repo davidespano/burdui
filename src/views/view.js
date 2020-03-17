@@ -9,6 +9,7 @@ function View(){
     this.name = "";
     this.children = [];
     this.isView = true;
+    this.parent = null;
 }
 
 Object.assign(View.prototype, {
@@ -36,22 +37,36 @@ Object.assign(View.prototype, {
         }
         if(c.isView){
             this.children.push(c);
+            c.parent = this;
         }
         return this;
     },
 
 
-    paintChildren: function(g){
+    paintChildren: function(g, b){
         for(let c of this.children){
-            g.save();
-            g.translate(c.bounds.x, c.bounds.y);
-            c.paint(g);
-            g.restore();
+            let intersection = c.bounds.intersection(r);
+            if(intersection.w > 0 && intersection.h > 0){
+                // the children is in the damaged area
+                g.save();
+                g.translate(c.bounds.x, c.bounds.y);
+                intersection.setX(intersection.x - c.bounds.x);
+                intersection.setY(intersection.y - c.bounds.y);
+                c.paint(g, intersection);
+                g.restore();
+            }
         }
     },
 
-    paint: function(g){
+    paint: function(g, b){
+        let r = b || this.bounds;
+
         g.save();
+        // setting the clipping region. The view cannot draw outside its bounds
+        g.beginPath();
+        g.rect(r.x, r.y, r.w, r.h);
+        g.clip();
+
         g.strokeStyle = "black";
         g.strokeRect(
             0,
@@ -59,16 +74,27 @@ Object.assign(View.prototype, {
             this.bounds.w,
             this.bounds.h);
 
-        // setting the clipping region. The view cannot draw outside its bounds
-        g.beginPath();
-        g.rect(this.bounds.x, this.bounds.y, this.bounds.w, this.bounds.h);
-        g.clip();
-
         // draw the children views.
-        this.paintChildren(g);
+        this.paintChildren(g,r);
         g.restore();
 
     },
+
+    invalidate : function(r, source){
+        source = source || this;
+        if(this.parent != null){
+            // move to the parent reference system
+            let damagedArea = new Bounds(
+                this.bounds.x + r.x,
+                this.bounds.y + r.y,
+                r.w, r.h);
+            // intersect the requested area with the current bounds
+            damagedArea = damagedArea.intersection(this.bounds);
+
+            // bubble up the request to the parent
+            this.parent.invalidate(damagedArea, source);
+        }
+    }
 });
 
 export {View};

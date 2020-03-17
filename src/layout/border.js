@@ -49,10 +49,13 @@ Object.assign( Border.prototype, {
         return this.rounded;
     },
 
-    paint : function(g){
+    paint : function(g, r){
 
 
         g.save();
+        g.beginPath();
+        g.rect(r.x, r.y, r.w, r.h);
+        g.clip();
         g.strokeStyle = this.color;
         g.lineWidth = this.lineWidth;
         createRoundedRect(g, this.rounded, this.bounds);

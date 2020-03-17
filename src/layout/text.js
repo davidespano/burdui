@@ -67,8 +67,11 @@ Object.assign( Text.prototype, {
         return this.color;
     },
 
-    paint: function(g){
+    paint: function(g, r){
         g.save();
+        g.beginPath();
+        g.rect(r.x, r.y, r.w, r.h);
+        g.clip();
         g.font = this.font;
         g.fillStyle = this.color;
         g.textAlign = this.align;

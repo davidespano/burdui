@@ -83,6 +83,7 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
 
     setBorderRounded: function(rounded){
         this.border.setRounded(rounded);
+        this.background.setRounded(rounded);
         return this;
     },
 
@@ -108,10 +109,11 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
         return this.text.getFont();
     },
 
-    paint: function(g){
-        this.background.paint(g);
-        this.border.paint(g);
-        this.text.paint(g);
+    paint: function(g, r){
+        r = r || this.bounds;
+        this.background.paint(g, r);
+        this.border.paint(g, r);
+        this.text.paint(g, r);
     },
 });
 

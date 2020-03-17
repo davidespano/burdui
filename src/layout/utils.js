@@ -1,7 +1,14 @@
+import {Bounds} from "./bounds";
 
-function createRoundedRect(g, rounded, bounds){
+function createRoundedRect(g, rounded, b){
     const halfRadians = (2 * Math.PI)/2;
     const quarterRadians = (2 * Math.PI)/4;
+    let bounds = new Bounds(
+        b.x + g.lineWidth,
+        b.y + g.lineWidth,
+        b.w - 2 * g.lineWidth,
+        b.h - 2 * g.lineWidth);
+    g.beginPath();
     // top left arc
     g.arc(rounded + bounds.x,
         rounded + bounds.y,
@@ -33,6 +40,7 @@ function createRoundedRect(g, rounded, bounds){
 
     // line from top right to top left
     g.lineTo(bounds.x + rounded, bounds.y);
+    g.closePath();
 }
 
 export {createRoundedRect}
