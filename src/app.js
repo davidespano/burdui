@@ -43,7 +43,7 @@ Object.assign( App.prototype, {
         let damagedArea = new Bounds(0,0,-1,-1);
 
         while(this.q.length > 0){
-            let evt = this.q.pop();
+            let evt = this.q.shift();
             switch(evt.type){
                 case EventTypes.paint:
                     damagedArea = damagedArea.union(evt.args.bounds);
