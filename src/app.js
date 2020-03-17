@@ -8,6 +8,8 @@ import {Bounds} from "./layout/bounds";
 function App(canvas, tree){
     this.canvas = canvas;
     this.g = canvas.getContext('2d');
+    // create a secondary canvas for emulating the double buffering here
+
     this.tree = tree;
     if(this.tree){
         this.tree.parent = this;
@@ -24,6 +26,10 @@ Object.assign( App.prototype, {
             window.setTimeout(function(){
                 self.tree.paint(self.g);
             }, 500);
+
+            window.setTimeout(function(){
+                // switch the two buffers here
+            }, 700);
 
         }
     },
@@ -52,6 +58,10 @@ Object.assign( App.prototype, {
             window.setTimeout(function(){
                 self.tree.paint(self.g, damagedArea);
             }, 500);
+
+            window.setTimeout(function(){
+                // switch the two buffers here
+            }, 700);
         }
     }
 
