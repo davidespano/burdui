@@ -200,8 +200,14 @@
 
 	Object.assign( App.prototype, {
 	    start : function(){
+	        let self = this;
 	        if(this.tree != null){
 	            this.tree.paint(this.g);
+	            // simulating flickering
+	            window.setTimeout(function(){
+	                self.tree.paint(self.g);
+	            }, 500);
+
 	        }
 	    },
 
@@ -222,55 +228,62 @@
 	            }
 	        }
 
+	        let self = this;
 	        if(damagedArea.w > 0 && damagedArea.h > 0){
 	            this.tree.paint(this.g, damagedArea);
+	            // simulating flickering
+	            window.setTimeout(function(){
+	                self.tree.paint(self.g, damagedArea);
+	            }, 500);
 	        }
 	    }
 
 	});
 
-	function createRoundedRect(g, rounded, b){
-	    const halfRadians = (2 * Math.PI)/2;
-	    const quarterRadians = (2 * Math.PI)/4;
-	    let bounds = new Bounds(
-	        b.x + g.lineWidth,
-	        b.y + g.lineWidth,
-	        b.w - 2 * g.lineWidth,
-	        b.h - 2 * g.lineWidth);
-	    g.beginPath();
-	    // top left arc
-	    g.arc(rounded + bounds.x,
-	        rounded + bounds.y,
-	        rounded, -quarterRadians, halfRadians, true);
+	let Utils = {
+	    createRoundedRect: function (g, rounded, b) {
+	        const halfRadians = (2 * Math.PI) / 2;
+	        const quarterRadians = (2 * Math.PI) / 4;
+	        let bounds = new Bounds(
+	            b.x + g.lineWidth,
+	            b.y + g.lineWidth,
+	            b.w - 2 * g.lineWidth,
+	            b.h - 2 * g.lineWidth);
+	        g.beginPath();
+	        // top left arc
+	        g.arc(rounded + bounds.x,
+	            rounded + bounds.y,
+	            rounded, -quarterRadians, halfRadians, true);
 
-	    // line from top left to bottom left
-	    g.lineTo(bounds.x, bounds.y + bounds.h - rounded);
+	        // line from top left to bottom left
+	        g.lineTo(bounds.x, bounds.y + bounds.h - rounded);
 
-	    // bottom left arc
-	    g.arc(rounded + bounds.x,
-	        bounds.h - rounded + bounds.y,
-	        rounded, halfRadians, quarterRadians, true);
+	        // bottom left arc
+	        g.arc(rounded + bounds.x,
+	            bounds.h - rounded + bounds.y,
+	            rounded, halfRadians, quarterRadians, true);
 
-	    // line from bottom left to bottom right
-	    g.lineTo(bounds.x + bounds.w - rounded,
-	        bounds.y + bounds.h);
+	        // line from bottom left to bottom right
+	        g.lineTo(bounds.x + bounds.w - rounded,
+	            bounds.y + bounds.h);
 
-	    // bottom right arc
-	    g.arc(bounds.x + bounds.w - rounded,
-	        bounds.y + bounds.h - rounded,
-	        rounded, quarterRadians, 0, true);
+	        // bottom right arc
+	        g.arc(bounds.x + bounds.w - rounded,
+	            bounds.y + bounds.h - rounded,
+	            rounded, quarterRadians, 0, true);
 
-	    // line from bottom right to top right
-	    g.lineTo(bounds.x + bounds.w, bounds.y + rounded);
+	        // line from bottom right to top right
+	        g.lineTo(bounds.x + bounds.w, bounds.y + rounded);
 
-	    // top right arc
-	    g.arc(bounds.x + bounds.w - rounded,
-	        bounds.y + rounded, rounded, 0, -quarterRadians, true);
+	        // top right arc
+	        g.arc(bounds.x + bounds.w - rounded,
+	            bounds.y + rounded, rounded, 0, -quarterRadians, true);
 
-	    // line from top right to top left
-	    g.lineTo(bounds.x + rounded, bounds.y);
-	    g.closePath();
-	}
+	        // line from top right to top left
+	        g.lineTo(bounds.x + rounded, bounds.y);
+	        g.closePath();
+	    },
+	};
 
 	/**
 	 * @author Davide Spano
@@ -307,17 +320,98 @@
 
 	    paint : function(g, r){
 	        g.save();
-
 	        g.beginPath();
 	        g.rect(r.x, r.y, r.w, r.h);
 	        g.closePath();
 	        g.clip();
-
 	        g.fillStyle = this.color;
 	        g.beginPath();
-	        createRoundedRect(g, this.rounded, this.bounds);
+	        Utils.createRoundedRect(g, this.rounded, this.bounds);
 	        g.closePath();
 	        g.fill();
+	        g.restore();
+	    }
+	});
+
+	/**
+	 * @author Davide Spano
+	 */
+
+	function Text(text, font){
+	    this.text = text || "";
+	    this.font = font || "30px Arial";
+	    this.align = "center";
+	    this.baseline = "middle";
+	    this.color = "black;";
+	    this.x = 0;
+	    this.y = 0;
+	}
+
+	Object.assign( Text.prototype, {
+	    setText : function(text){
+	        this.text = text;
+	        return this;
+	    },
+
+	    getText : function(){
+	        return this.text;
+	    },
+
+	    setAlign : function(align){
+	        this.align = align;
+	        return this;
+	    },
+
+	    getAlign : function(){
+	        return this.align;
+	    },
+
+	    setBaseline : function(baseline){
+	        this.baseline = baseline;
+	        return this;
+	    },
+
+	    getBaseline : function(){
+	        return this.baseline;
+	    },
+
+	    setFont : function(font){
+	        this.font = font;
+	        return this;
+	    },
+
+	    getFont : function(){
+	        return this.font;
+	    },
+
+	    setPosition: function(x, y){
+	        this.x = x;
+	        this.y = y;
+	        return this;
+	    },
+
+	    getPosition: function(){
+	        return {x: this.x, y: this.y};
+	    },
+	    setColor : function(color){
+	        this.color = color;
+	        return this;
+	    },
+
+	    getColor: function(){
+	        return this.color;
+	    },
+
+	    paint: function(g, r){
+	        g.save();
+	        g.beginPath();
+	        g.rect(r.x, r.y, r.w, r.h);
+	        g.clip();
+	        g.font = this.font;
+	        g.fillStyle = this.color;
+	        g.textAlign = this.align;
+	        g.textBaseline = this.baseline;
+	        g.fillText(this.text, this.x, this.y);
 	        g.restore();
 	    }
 	});
@@ -380,7 +474,7 @@
 	        g.clip();
 	        g.strokeStyle = this.color;
 	        g.lineWidth = this.lineWidth;
-	        createRoundedRect(g, this.rounded, this.bounds);
+	        Utils.createRoundedRect(g, this.rounded, this.bounds);
 	        g.stroke();
 	        g.restore();
 	    },
@@ -490,95 +584,13 @@
 	 * @author Davide Spano
 	 */
 
-	function Text(text, font){
-	    this.text = text || "";
-	    this.font = font || "30px Arial";
-	    this.align = "center";
-	    this.baseline = "middle";
-	    this.color = "black;";
-	    this.x = 0;
-	    this.y = 0;
-	}
-
-	Object.assign( Text.prototype, {
-	    setText : function(text){
-	        this.text = text;
-	        return this;
-	    },
-
-	    getText : function(){
-	        return this.text;
-	    },
-
-	    setAlign : function(align){
-	        this.align = align;
-	        return this;
-	    },
-
-	    getAlign : function(){
-	        return this.align;
-	    },
-
-	    setBaseline : function(baseline){
-	        this.baseline = baseline;
-	        return this;
-	    },
-
-	    getBaseline : function(){
-	        return this.baseline;
-	    },
-
-	    setFont : function(font){
-	        this.font = font;
-	        return this;
-	    },
-
-	    getFont : function(){
-	        return this.font;
-	    },
-
-	    setPosition: function(x, y){
-	        this.x = x;
-	        this.y = y;
-	        return this;
-	    },
-
-	    getPosition: function(){
-	        return {x: this.x, y: this.y};
-	    },
-	    setColor : function(color){
-	        this.color = color;
-	        return this;
-	    },
-
-	    getColor: function(){
-	        return this.color;
-	    },
-
-	    paint: function(g, r){
-	        g.save();
-	        g.beginPath();
-	        g.rect(r.x, r.y, r.w, r.h);
-	        g.clip();
-	        g.font = this.font;
-	        g.fillStyle = this.color;
-	        g.textAlign = this.align;
-	        g.textBaseline = this.baseline;
-	        g.fillText(this.text, this.x, this.y);
-	        g.restore();
-	    }
-	});
-
-	/**
-	 * @author Davide Spano
-	 */
-
 	function Button(bounds){
 	    View.call(this);
 	    this.bounds = bounds || new Bounds();
 	    this.border = new Border();
 	    this.background = new Background();
 	    this.text = new Text();
+	    this.flickerCount = 0;
 	}
 
 	Button.prototype = Object.assign( Object.create( View.prototype ), {
@@ -676,9 +688,16 @@
 
 	    paint: function(g, r){
 	        r = r || this.bounds;
-	        this.background.paint(g, r);
-	        this.border.paint(g, r);
-	        this.text.paint(g, r);
+	        if(this.flickerCount == 0){
+	            this.background.paint(g, r);
+	        }else {
+	            this.border.paint(g, r);
+	            this.text.paint(g, r);
+	        }
+
+	        this.flickerCount = (this.flickerCount + 1) % 2;
+
+
 	    },
 	});
 
@@ -984,6 +1003,7 @@
 	exports.ButtonElement = ButtonElement;
 	exports.StackPanel = StackPanel;
 	exports.StackPanelElement = StackPanelElement;
+	exports.Text = Text;
 	exports.View = View;
 	exports.ViewElement = ViewElement;
 

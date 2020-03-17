@@ -2,7 +2,7 @@
  * @author Davide Spano
  */
 import {Bounds} from "./bounds";
-import {createRoundedRect} from "./utils";
+import {Utils} from "./utils";
 
 function Border( bounds, color, lineWidth, rounded){
     this.color = color || "black";
@@ -58,7 +58,7 @@ Object.assign( Border.prototype, {
         g.clip();
         g.strokeStyle = this.color;
         g.lineWidth = this.lineWidth;
-        createRoundedRect(g, this.rounded, this.bounds);
+        Utils.createRoundedRect(g, this.rounded, this.bounds);
         g.stroke();
         g.restore();
     },

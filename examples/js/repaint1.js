@@ -44,20 +44,21 @@ window.onload = function(){
     const app = new burdui.App(screen, root);
     app.start();
 
-    button1.setText("Repaint 1");
-    button2.setText("Repaint 2");
-    button3.setText("Repaint 3");
-    button1.setBackgroundColor("#d3d3d3");
-    button2.setBackgroundColor("#d3d3d3");
-    button3.setBackgroundColor("#d3d3d3");
+    document.getElementById("repaint").onclick = function() {
+        button1.setText("Repaint 1");
+        button2.setText("Repaint 2");
+        button3.setText("Repaint 3");
+        button1.setBackgroundColor("#d3d3d3");
+        button2.setBackgroundColor("#d3d3d3");
+        button3.setBackgroundColor("#d3d3d3");
 
 
-    button1.invalidate(new burdui.Bounds(30, 20, 190, 35));
-    button2.invalidate(new burdui.Bounds(30, 20, 190, 35));
-    button3.invalidate(new burdui.Bounds(30, 20, 190, 35));
+        button1.invalidate(new burdui.Bounds(30, 20, 190, 35));
+        button2.invalidate(new burdui.Bounds(30, 20, 190, 35));
+        button3.invalidate(new burdui.Bounds(30, 20, 190, 35));
 
-    app.flushQueue();
-
+        app.flushQueue();
+    }
 
 
 

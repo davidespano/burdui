@@ -14,6 +14,7 @@ function Button(bounds){
     this.border = new Border();
     this.background = new Background();
     this.text = new Text();
+    this.flickerCount = 0;
 }
 
 Button.prototype = Object.assign( Object.create( View.prototype ), {
@@ -111,9 +112,16 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
 
     paint: function(g, r){
         r = r || this.bounds;
-        this.background.paint(g, r);
-        this.border.paint(g, r);
-        this.text.paint(g, r);
+        if(this.flickerCount == 0){
+            this.background.paint(g, r);
+        }else{
+            this.border.paint(g, r);
+            this.text.paint(g, r);
+        }
+
+        this.flickerCount = (this.flickerCount + 1) % 2;
+
+
     },
 });
 

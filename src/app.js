@@ -17,8 +17,14 @@ function App(canvas, tree){
 
 Object.assign( App.prototype, {
     start : function(){
+        let self = this;
         if(this.tree != null){
             this.tree.paint(this.g);
+            // simulating flickering
+            window.setTimeout(function(){
+                self.tree.paint(self.g);
+            }, 500);
+
         }
     },
 
@@ -39,8 +45,13 @@ Object.assign( App.prototype, {
             }
         }
 
+        let self = this;
         if(damagedArea.w > 0 && damagedArea.h > 0){
             this.tree.paint(this.g, damagedArea);
+            // simulating flickering
+            window.setTimeout(function(){
+                self.tree.paint(self.g, damagedArea);
+            }, 500);
         }
     }
 
