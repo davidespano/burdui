@@ -191,9 +191,8 @@
 	function App(canvas, tree){
 	    this.canvas = canvas;
 	    this.g = canvas.getContext('2d');
-	    // create secondary canvas for emulating double buffering
-	    this.secondaryCanvas = this.canvas.cloneNode();
-	    this.g2 = this.secondaryCanvas.getContext('2d');
+	    // create a secondary canvas for emulating the double buffering here
+
 	    this.tree = tree;
 	    if(this.tree){
 	        this.tree.parent = this;
@@ -205,14 +204,14 @@
 	    start : function(){
 	        let self = this;
 	        if(this.tree != null){
-	            this.tree.paint(this.g2);
+	            this.tree.paint(this.g);
 	            // simulating flickering
 	            window.setTimeout(function(){
-	                self.tree.paint(self.g2);
+	                self.tree.paint(self.g);
 	            }, 500);
 
 	            window.setTimeout(function(){
-	                self.g.drawImage(self.secondaryCanvas, 0, 0);
+	                // switch the two buffers here
 	            }, 700);
 
 	        }
@@ -227,7 +226,7 @@
 	        let damagedArea = new Bounds(0,0,-1,-1);
 
 	        while(this.q.length > 0){
-	            let evt = this.q.pop();
+	            let evt = this.q.shift();
 	            switch(evt.type){
 	                case EventTypes.paint:
 	                    damagedArea = damagedArea.union(evt.args.bounds);
@@ -237,14 +236,14 @@
 
 	        let self = this;
 	        if(damagedArea.w > 0 && damagedArea.h > 0){
-	            this.tree.paint(this.g2, damagedArea);
+	            this.tree.paint(this.g, damagedArea);
 	            // simulating flickering
 	            window.setTimeout(function(){
-	                self.tree.paint(self.g2, damagedArea);
+	                self.tree.paint(self.g, damagedArea);
 	            }, 500);
 
 	            window.setTimeout(function(){
-	                self.g.drawImage(self.secondaryCanvas, 0, 0);
+	                // switch the two buffers here
 	            }, 700);
 	        }
 	    }
@@ -537,7 +536,6 @@
 
 	    paintChildren: function(g, b){
 	        let r = b || this.bounds;
-
 	        for(let c of this.children){
 	            let intersection = c.bounds.intersection(r);
 	            if(intersection.w > 0 && intersection.h > 0){

@@ -44,11 +44,18 @@ Object.assign(View.prototype, {
 
 
     paintChildren: function(g, b){
+        let r = b || this.bounds;
         for(let c of this.children){
-            g.save();
-            g.translate(c.bounds.x, c.bounds.y);
-            c.paint(g);
-            g.restore();
+            let intersection = c.bounds.intersection(r);
+            if(intersection.w > 0 && intersection.h > 0){
+                // the children is in the damaged area
+                g.save();
+                g.translate(c.bounds.x, c.bounds.y);
+                intersection.setX(intersection.x - c.bounds.x);
+                intersection.setY(intersection.y - c.bounds.y);
+                c.paint(g, intersection);
+                g.restore();
+            }
         }
     },
 
