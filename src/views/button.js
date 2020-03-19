@@ -14,6 +14,7 @@ function Button(bounds){
     this.border = new Border();
     this.background = new Background();
     this.text = new Text();
+    this.flickerCount = 0;
 }
 
 Button.prototype = Object.assign( Object.create( View.prototype ), {
@@ -83,6 +84,7 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
 
     setBorderRounded: function(rounded){
         this.border.setRounded(rounded);
+        this.background.setRounded(rounded);
         return this;
     },
 
@@ -108,10 +110,18 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
         return this.text.getFont();
     },
 
-    paint: function(g){
-        this.background.paint(g);
-        this.border.paint(g);
-        this.text.paint(g);
+    paint: function(g, r){
+        r = r || this.bounds;
+        if(this.flickerCount == 0){
+            this.background.paint(g, r);
+        }else{
+            this.border.paint(g, r);
+            this.text.paint(g, r);
+        }
+
+        this.flickerCount = (this.flickerCount + 1) % 2;
+
+
     },
 });
 

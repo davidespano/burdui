@@ -3,7 +3,7 @@
  */
 
 import {Bounds} from "./bounds";
-import {createRoundedRect} from "./utils";
+import {Utils} from "./utils";
 
 function Background(bounds, color, rounded){
     this.bounds = bounds || new Bounds();
@@ -35,11 +35,15 @@ Object.assign( Background.prototype, {
         return this;
     },
 
-    paint : function(g){
+    paint : function(g, r){
         g.save();
+        g.beginPath();
+        g.rect(r.x, r.y, r.w, r.h);
+        g.closePath();
+        g.clip();
         g.fillStyle = this.color;
         g.beginPath();
-        createRoundedRect(g, this.rounded, this.bounds);
+        Utils.createRoundedRect(g, this.rounded, this.bounds);
         g.closePath();
         g.fill();
         g.restore();

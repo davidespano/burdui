@@ -1,6 +1,7 @@
 export {App} from './app';
 export {Bounds} from './layout/bounds.js';
 export {Background} from './layout/background.js';
+export {Text} from './layout/text.js';
 export {Border} from './layout/border.js';
 export {View} from './views/view.js';
 export {Button} from './views/button.js'
