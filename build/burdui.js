@@ -713,6 +713,112 @@
 	});
 
 	/**
+	 * @author Emanuele Concas
+	 */
+
+	function TextField(bounds, text){
+	    View.call(this);
+	    this.bounds = bounds || new Bounds();
+	    this.border = new Border();
+	    this.background = new Background();
+	    this.text = new Text(text);
+	}
+
+	TextField.prototype = Object.assign( Object.create( View.prototype ), {
+
+	    constructor: TextField,
+
+	    setBounds: function(bounds){
+	        this.bounds = bounds;
+	        this.border.setBounds(new Bounds(0,0, this.bounds.w, this.bounds.h));
+	        this.background.setBounds(new Bounds(
+	            this.border.lineWidth/2,
+	            this.border.lineWidth/2,
+	            this.bounds.w - this.border.lineWidth,
+	            this.bounds.h - this.border.lineWidth));
+	        this.text.setAlign("left");
+	        this.text.setBaseline("middle");
+	        this.text.setPosition(
+	             10,
+	             this.bounds.h/2);
+	        return this;
+	    },
+
+	    getBounds : function(){
+	        return this.bounds;
+	    },
+
+	    setBorderLineWidth: function(width){
+	        this.border.setLineWidth(width);
+	        this.background.setBounds(new Bounds(
+	            this.border.lineWidth/2,
+	            this.border.lineWidth/2,
+	            this.bounds.w - this.border.lineWidth,
+	            this.bounds.h - this.border.lineWidth));
+	        return this;
+	    },
+
+	    getBorderLineWidth: function(){
+	        return this.border.getLineWidth();
+	    },
+
+	    setBorderColor: function(color){
+	        this.border.setColor(color);
+	        return this;
+	    },
+
+	    getBorderColor: function(){
+	        return this.border.getColor();
+	    },
+
+	    setTextColor: function(color){
+	        this.text.setColor(color);
+	        return this;
+	    },
+
+	    getTextColor: function(){
+	        return this.text.getColor();
+	    },
+
+	    getText: function(){
+	        return this.text.getText();
+	    },
+
+	    setFont: function(font){
+	        this.text.setFont(font);
+	        return this;
+	    },
+
+	    getFont: function(){
+	        return this.text.getFont();
+	    },
+
+	    setBackgroundColor: function(color){
+	        this.background.setColor(color);
+	        return this;
+	    },
+
+	    getBackgroundColor: function(){
+	        return this.background.getColor();
+	    },
+
+	    setBorderRounded: function(rounded){
+	        this.border.setRounded(rounded);
+	        return this;
+	    },
+
+	    getBorderRounded: function(){
+	        return this.border.getRounded();
+	    },
+
+	    paint: function(g){
+	        this.background.paint(g);
+	        this.border.paint(g);
+	        this.text.paint(g);
+	    },
+	});
+
+	/**
 	 * @author Davide Spano
 	 */
 
@@ -1014,6 +1120,7 @@
 	exports.ButtonElement = ButtonElement;
 	exports.StackPanel = StackPanel;
 	exports.StackPanelElement = StackPanelElement;
+	exports.TextField = TextField;
 	exports.Text = Text;
 	exports.View = View;
 	exports.ViewElement = ViewElement;
