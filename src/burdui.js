@@ -5,6 +5,7 @@ export {Text} from './layout/text.js';
 export {Border} from './layout/border.js';
 export {View} from './views/view.js';
 export {Button} from './views/button.js'
+export {GridPanel} from './views/gridPanel'
 export {TextField} from './views/textField.js'
 export {StackPanel} from './views/stackPanel.js'
 export {ViewElement} from './declarative/viewElement'
