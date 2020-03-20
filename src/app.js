@@ -9,7 +9,8 @@ function App(canvas, tree){
     this.canvas = canvas;
     this.g = canvas.getContext('2d');
     // create a secondary canvas for emulating the double buffering here
-
+    this.canvas2 = canvas.cloneNode(true)
+    this.g2 = this.canvas2.getContext('2d');
     this.tree = tree;
     if(this.tree){
         this.tree.parent = this;
@@ -21,14 +22,15 @@ Object.assign( App.prototype, {
     start : function(){
         let self = this;
         if(this.tree != null){
-            this.tree.paint(this.g);
+            this.tree.paint(this.g2);
             // simulating flickering
             window.setTimeout(function(){
-                self.tree.paint(self.g);
+                self.tree.paint(self.g2);
             }, 500);
 
             window.setTimeout(function(){
                 // switch the two buffers here
+                self.g.drawImage(self.canvas2, 0,0);
             }, 700);
 
         }
@@ -53,14 +55,15 @@ Object.assign( App.prototype, {
 
         let self = this;
         if(damagedArea.w > 0 && damagedArea.h > 0){
-            this.tree.paint(this.g, damagedArea);
+            this.tree.paint(this.g2, damagedArea);
             // simulating flickering
             window.setTimeout(function(){
-                self.tree.paint(self.g, damagedArea);
+                self.tree.paint(self.g2, damagedArea);
             }, 500);
 
             window.setTimeout(function(){
                 // switch the two buffers here
+                self.g.drawImage(self.canvas2, 0,0);
             }, 700);
         }
     }

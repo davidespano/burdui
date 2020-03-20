@@ -192,7 +192,8 @@
 	    this.canvas = canvas;
 	    this.g = canvas.getContext('2d');
 	    // create a secondary canvas for emulating the double buffering here
-
+	    this.canvas2 = canvas.cloneNode(true);
+	    this.g2 = this.canvas2.getContext('2d');
 	    this.tree = tree;
 	    if(this.tree){
 	        this.tree.parent = this;
@@ -204,14 +205,15 @@
 	    start : function(){
 	        let self = this;
 	        if(this.tree != null){
-	            this.tree.paint(this.g);
+	            this.tree.paint(this.g2);
 	            // simulating flickering
 	            window.setTimeout(function(){
-	                self.tree.paint(self.g);
+	                self.tree.paint(self.g2);
 	            }, 500);
 
 	            window.setTimeout(function(){
 	                // switch the two buffers here
+	                self.g.drawImage(self.canvas2, 0,0);
 	            }, 700);
 
 	        }
@@ -236,14 +238,15 @@
 
 	        let self = this;
 	        if(damagedArea.w > 0 && damagedArea.h > 0){
-	            this.tree.paint(this.g, damagedArea);
+	            this.tree.paint(this.g2, damagedArea);
 	            // simulating flickering
 	            window.setTimeout(function(){
-	                self.tree.paint(self.g, damagedArea);
+	                self.tree.paint(self.g2, damagedArea);
 	            }, 500);
 
 	            window.setTimeout(function(){
 	                // switch the two buffers here
+	                self.g.drawImage(self.canvas2, 0,0);
 	            }, 700);
 	        }
 	    }
@@ -714,7 +717,7 @@
 	 * @author Davide Spano
 	 */
 
-	function GridPanel(style){
+	function GridPanel(){
 	    View.call(this);
 	    this.padding = 0;
 	    this.rows = 0;
@@ -804,12 +807,12 @@
 	 * @author Emanuele Concas
 	 */
 
-	function TextField(bounds, text){
+	function TextField(bounds){
 	    View.call(this);
 	    this.bounds = bounds || new Bounds();
 	    this.border = new Border();
 	    this.background = new Background();
-	    this.text = new Text(text);
+	    this.text = new Text();
 	}
 
 	TextField.prototype = Object.assign( Object.create( View.prototype ), {
@@ -868,6 +871,11 @@
 	        return this.text.getColor();
 	    },
 
+	    setText: function(text){
+	        this.text.setText(text);
+	        return this;
+	    },
+
 	    getText: function(){
 	        return this.text.getText();
 	    },
@@ -899,10 +907,12 @@
 	        return this.border.getRounded();
 	    },
 
-	    paint: function(g){
-	        this.background.paint(g);
-	        this.border.paint(g);
-	        this.text.paint(g);
+	    paint: function(g, r){
+	        r = r || this.bounds;
+
+	        this.background.paint(g, r);
+	        this.border.paint(g, r);
+	        this.text.paint(g, r);
 	    },
 	});
 

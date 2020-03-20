@@ -4,7 +4,7 @@
 import {View} from "./view";
 import {Bounds} from "../layout/bounds";
 
-function GridPanel(style){
+function GridPanel(){
     View.call(this);
     this.padding = 0;
     this.rows = 0;
