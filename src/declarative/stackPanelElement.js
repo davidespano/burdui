@@ -13,7 +13,7 @@ class StackPanelElement extends ViewElement{
 
         for(let attr of this.attributes){
             switch (attr.name) {
-                case 'style':
+                case 'stack-style':
                     this.style = attr.value;
                     break;
 
