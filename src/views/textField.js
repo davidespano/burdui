@@ -8,12 +8,12 @@ import {Background} from "../layout/background";
 import {Bounds} from "../layout/bounds";
 import {Text} from "../layout/text";
 
-function TextField(bounds, text){
+function TextField(bounds){
     View.call(this);
     this.bounds = bounds || new Bounds();
     this.border = new Border();
     this.background = new Background();
-    this.text = new Text(text);
+    this.text = new Text();
 }
 
 TextField.prototype = Object.assign( Object.create( View.prototype ), {
@@ -72,6 +72,11 @@ TextField.prototype = Object.assign( Object.create( View.prototype ), {
         return this.text.getColor();
     },
 
+    setText: function(text){
+        this.text.setText(text);
+        return this;
+    },
+
     getText: function(){
         return this.text.getText();
     },
@@ -103,10 +108,12 @@ TextField.prototype = Object.assign( Object.create( View.prototype ), {
         return this.border.getRounded();
     },
 
-    paint: function(g){
-        this.background.paint(g);
-        this.border.paint(g);
-        this.text.paint(g);
+    paint: function(g, r){
+        r = r || this.bounds;
+
+        this.background.paint(g, r);
+        this.border.paint(g, r);
+        this.text.paint(g, r);
     },
 });
 
