@@ -137,8 +137,7 @@ Object.assign(View.prototype, {
 
     invalidate : function(r, source){
         source = source || this;
-        r = r || this.bounds;
-
+        r = r || new Bounds(0,0, this.bounds.w, this.bounds.h);
         if(this.parent != null){
             // move to the parent reference system
             let damagedArea = new Bounds(
