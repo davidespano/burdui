@@ -17,6 +17,7 @@ GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
 
     setRows: function(rows){
         this.rows = rows;
+        this.updateBounds();
         return this;
     },
 
@@ -26,6 +27,7 @@ GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
 
     setCols: function(cols){
         this.cols = cols;
+        this.updateBounds();
         return this;
     },
 
@@ -40,8 +42,11 @@ GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
     },
 
     addChild: function(child, row, col, rowSpan, colSpan){
-        row = row || 0;
-        col = col || 0;
+        row = row || child.row || 0;
+        col = col || child.col || 0;
+        rowSpan = rowSpan || child.rowSpan || 1;
+        colSpan = colSpan || child.colSpan || 1;
+
         if(row < 0) row = 0;
         if(col < 0) col = 0;
         if(row >= this.rows) row = this.rows -1;
@@ -55,8 +60,6 @@ GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
         child.colSpan = colSpan;
 
         View.prototype.addChild.call(this, child);
-
-        // not optimized, we can speed-up setting the bounds of the last child.
         this.updateBounds();
 
         return this;

@@ -8,18 +8,17 @@ import {Background} from "../layout/background";
 import {Bounds} from "../layout/bounds";
 import {Text} from "../layout/text";
 
-function Button(bounds){
+function Label(bounds){
     View.call(this);
     this.bounds = bounds || new Bounds();
     this.border = new Border();
     this.background = new Background();
     this.text = new Text();
-    this.flickerCount = 0;
 }
 
-Button.prototype = Object.assign( Object.create( View.prototype ), {
+Label.prototype = Object.assign( Object.create( View.prototype ), {
 
-    constructor: Button,
+    constructor: Label,
 
     setBounds: function(bounds){
         this.bounds = bounds;
@@ -29,17 +28,19 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
             this.border.lineWidth/2,
             this.bounds.w - this.border.lineWidth,
             this.bounds.h - this.border.lineWidth));
-        this.text.setAlign("center");
+        this.text.setAlign("left");
         this.text.setBaseline("middle");
         this.text.setPosition(
-             this.bounds.w/2,
-             this.bounds.h/2);
+            10,
+            this.bounds.h/2);
         return this;
     },
 
     getBounds : function(){
         return this.bounds;
     },
+
+
 
     setTextColor: function(color){
         this.text.setColor(color);
@@ -48,6 +49,16 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
 
     getTextColor: function(){
         return this.text.getColor();
+    },
+
+    setBorderRounded: function(rounded){
+        this.border.setRounded(rounded);
+        this.background.setRounded(rounded);
+        return this;
+    },
+
+    getBorderRounded: function(){
+        return this.border.getRounded();
     },
 
     setText: function(text){
@@ -76,4 +87,4 @@ Button.prototype = Object.assign( Object.create( View.prototype ), {
     },
 });
 
-export {Button};
+export {Label};

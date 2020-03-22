@@ -7,7 +7,7 @@ import {Utils} from "./utils";
 
 function Background(bounds, color, rounded){
     this.bounds = bounds || new Bounds();
-    this.color = color || "white";
+    this.color = color || "#ffffff00";
     this.rounded = rounded || 0;
 };
 

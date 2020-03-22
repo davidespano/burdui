@@ -6,6 +6,14 @@
 
 	const EventTypes = {
 	    paint: 0,
+	    mouseMove: 1,
+	    mouseDown: 2,
+	    mouseUp: 3,
+
+	    mouseClick: 100,
+	    mouseDoubleClick: 101,
+	    mouseEnter: 102,
+	    mouseLeave: 103,
 	};
 
 	function Event(source, type, args){
@@ -191,36 +199,67 @@
 	function App(canvas, tree){
 	    this.canvas = canvas;
 	    this.g = canvas.getContext('2d');
-	    // create a secondary canvas for emulating the double buffering here
-	    this.canvas2 = canvas.cloneNode(true);
-	    this.g2 = this.canvas2.getContext('2d');
 	    this.tree = tree;
 	    if(this.tree){
 	        this.tree.parent = this;
 	    }
 	    this.q = [];
+
+	    //variables for inferring events
+	    this.pointer = {x: -1, y: -1};
+	    this.primaryBtn = 0;
+	    this.secondaryBtn = 0;
+
+	    this.clickThreshold = 100;
+	    this.moveThreshold = 10;
+
+	    this.buttonPressed = -1;
+
 	}
 
 	Object.assign( App.prototype, {
 	    start : function(){
-	        let self = this;
 	        if(this.tree != null){
-	            this.tree.paint(this.g2);
-	            // simulating flickering
-	            window.setTimeout(function(){
-	                self.tree.paint(self.g2);
-	            }, 500);
+	            this.tree.paint(this.g);
 
-	            window.setTimeout(function(){
-	                // switch the two buffers here
-	                self.g.drawImage(self.canvas2, 0,0);
-	            }, 700);
+	            // receive the input from the devices
 
+	            this.canvas.addEventListener('mousemove', e =>{
+	                let test = this.hitTest(e);
+	                if(test.view){
+	                    let evt = new Event(test.view, EventTypes.mouseMove, test.args);
+	                    this.q.push(evt);
+	                }
+	            });
+
+	            this.canvas.addEventListener('mousedown', e =>{
+	                let test = this.hitTest(e);
+	                if(test.view){
+	                    let evt = new Event(test.view, EventTypes.mouseDown, test.args);
+	                    this.q.push(evt);
+	                }
+	            });
+
+	            this.canvas.addEventListener('mouseup', e => {
+	                let test = this.hitTest(e);
+	                if(test.view){
+	                    let evt = new Event(test.view, EventTypes.mouseUp, test.args);
+	                    this.q.push(evt);
+	                }
+	            });
+
+	            let self = this;
+	            window.setInterval(function(){
+	                self.flushQueue();
+	            }, 100);
 	        }
 	    },
 
 	    invalidate: function(r, source){
-	        let evt = new Event(source, EventTypes.paint, {bounds: r});
+	        let evt = new Event(source, EventTypes.paint, {
+	            time: new Date().getTime(),
+	            bounds: r
+	        });
 	        this.q.push(evt);
 	    },
 
@@ -233,23 +272,98 @@
 	                case EventTypes.paint:
 	                    damagedArea = damagedArea.union(evt.args.bounds);
 	                    break;
+
+	                case EventTypes.mouseMove:
+	                    evt.source.raise(evt.source, EventTypes.mouseMove, evt.args);
+	                    this.pointer.x = evt.args.screenX;
+	                    this.pointer.y = evt.args.screenY;
+	                    break;
+
+	                case EventTypes.mouseDown:
+	                    evt.source.raise(evt.source, EventTypes.mouseDown, evt.args);
+	                    if(evt.args.primaryBtn){
+	                        this.primaryBtn = evt.args.time;
+	                        this.buttonPressed = 1;
+	                    }
+	                    if(evt.args.secondaryBtn){
+	                        this.secondaryBtn = evt.args.time;
+	                        this.buttonPressed = 2;
+	                    }
+	                    break;
+
+	                case EventTypes.mouseUp:
+	                    evt.source.raise(evt.source, EventTypes.mouseUp, evt.args);
+	                    if(this.buttonPressed == 1 &&
+	                        this.primaryBtn - evt.args.time < this.clickThreshold &&
+	                        Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
+	                        Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
+	                        evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
+	                    }
+	                    if(this.buttonPressed == 2 &&
+	                        this.secondaryBtn - evt.args.time < this.clickThreshold &&
+	                        Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
+	                        Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
+	                        evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
+	                    }
+	                    this.buttonPressed = -1;
+	                    break;
 	            }
 	        }
 
-	        let self = this;
 	        if(damagedArea.w > 0 && damagedArea.h > 0){
-	            this.tree.paint(this.g2, damagedArea);
-	            // simulating flickering
-	            window.setTimeout(function(){
-	                self.tree.paint(self.g2, damagedArea);
-	            }, 500);
-
-	            window.setTimeout(function(){
-	                // switch the two buffers here
-	                self.g.drawImage(self.canvas2, 0,0);
-	            }, 700);
+	            this.tree.paint(this.g, damagedArea);
 	        }
-	    }
+	    },
+
+	    hitTest: function(e){
+	        // getting the point in the canvas coordinates
+	        let rect = e.target.getBoundingClientRect();
+	        let x = e.clientX - rect.left;
+	        let y = e.clientY - rect.top;
+
+	        let args = {
+	            time: new Date().getTime(),
+	            x : x,
+	            y : y,
+	            screenX : x,
+	            screenY : y,
+	            primaryBtn : e.buttons == 1,
+	            secondaryBtn: e.buttons == 2
+	        };
+	        let view = this.tunnel(this.tree, x, y, 0, 0, args);
+	        //console.log(`mouse (${x}, ${y}) on view ${view.name}` );
+	        return {
+	            view: view,
+	            args: args
+	        };
+	    },
+
+	    tunnel: function(view, x, y, dx, dy, e){
+	        if(view == null){
+	            return null;
+	        }
+
+	        let inner = null;
+	        let rect = new Bounds(
+	            view.bounds.x + dx,
+	            view.bounds.y + dy,
+	            view.bounds.w,
+	            view.bounds.h
+	        );
+	        if(rect.contains(x, y)){
+	            inner = view;
+	            e.x = x - dx;
+	            e.y = y - dy;
+	        }else {
+	            return null;
+	        }
+
+	        for(let c of view.children){
+	            inner = this.tunnel(c, x , y, rect.x, rect.y, e) || inner;
+	        }
+
+	        return inner;
+	    },
 
 	});
 
@@ -304,7 +418,7 @@
 
 	function Background(bounds, color, rounded){
 	    this.bounds = bounds || new Bounds();
-	    this.color = color || "white";
+	    this.color = color || "#ffffff00";
 	    this.rounded = rounded || 0;
 	}
 	Object.assign( Background.prototype, {
@@ -434,10 +548,10 @@
 	 */
 
 	function Border( bounds, color, lineWidth, rounded){
-	    this.color = color || "black";
+	    this.color = color || "#ffffff00";
 	    this.bounds = bounds || new Bounds();
 	    this.rounded = rounded || 0;
-	    this.lineWidth = lineWidth || 1;
+	    this.lineWidth = lineWidth || 0;
 	}
 
 	Object.assign( Border.prototype, {
@@ -485,10 +599,13 @@
 	        g.beginPath();
 	        g.rect(r.x, r.y, r.w, r.h);
 	        g.clip();
-	        g.strokeStyle = this.color;
-	        g.lineWidth = this.lineWidth;
-	        Utils.createRoundedRect(g, this.rounded, this.bounds);
-	        g.stroke();
+	        if(this.lineWidth >0){
+	            g.strokeStyle = this.color;
+	            g.lineWidth = this.lineWidth;
+	            Utils.createRoundedRect(g, this.rounded, this.bounds);
+	            g.stroke();
+	        }
+
 	        g.restore();
 	    },
 
@@ -500,15 +617,28 @@
 
 	function View(){
 	    this.bounds = new Bounds();
+	    this.border = new Border();
+	    this.background = new Background();
 	    this.name = "";
 	    this.children = [];
 	    this.isView = true;
 	    this.parent = null;
+	    this.listeners = {};
+
+	    this.addEventListener(EventTypes.mouseClick, function(source, e){
+	        console.log(`mouse click (${e.x}, ${e.y}) on view ${source.name}`);
+	    });
 	}
 
 	Object.assign(View.prototype, {
 	    setBounds : function(bounds){
 	        this.bounds = bounds;
+	        this.border.setBounds(new Bounds(0,0, this.bounds.w, this.bounds.h));
+	        this.background.setBounds(new Bounds(
+	            this.border.lineWidth/2,
+	            this.border.lineWidth/2,
+	            this.bounds.w - this.border.lineWidth,
+	            this.bounds.h - this.border.lineWidth));
 	        return this;
 	    },
 
@@ -523,6 +653,48 @@
 
 	    getName : function(){
 	        return name;
+	    },
+
+	    setBackgroundColor: function(color){
+	        this.background.setColor(color);
+	        return this;
+	    },
+
+	    getBackgroundColor: function(){
+	        return this.background.getColor();
+	    },
+
+	    setBorderLineWidth: function(width){
+	        this.border.setLineWidth(width);
+	        this.background.setBounds(new Bounds(
+	            this.border.lineWidth/2,
+	            this.border.lineWidth/2,
+	            this.bounds.w - this.border.lineWidth,
+	            this.bounds.h - this.border.lineWidth));
+	        return this;
+	    },
+
+	    getBorderLineWidth: function(){
+	        return this.border.getLineWidth();
+	    },
+
+	    setBorderColor: function(color){
+	        this.border.setColor(color);
+	        return this;
+	    },
+
+	    getBorderColor: function(){
+	        return this.border.getColor();
+	    },
+
+	    setBorderRounded: function(rounded){
+	        this.border.setRounded(rounded);
+	        this.background.setRounded(rounded);
+	        return this;
+	    },
+
+	    getBorderRounded: function(){
+	        return this.border.getRounded();
 	    },
 
 	    addChild: function(c){
@@ -562,12 +734,8 @@
 	        g.rect(r.x, r.y, r.w, r.h);
 	        g.clip();
 
-	        g.strokeStyle = "black";
-	        g.strokeRect(
-	            0,
-	            0,
-	            this.bounds.w,
-	            this.bounds.h);
+	        this.background.paint(g, r);
+	        this.border.paint(g, r);
 
 	        // draw the children views.
 	        this.paintChildren(g,r);
@@ -577,6 +745,8 @@
 
 	    invalidate : function(r, source){
 	        source = source || this;
+	        r = r || this.bounds;
+
 	        if(this.parent != null){
 	            // move to the parent reference system
 	            let damagedArea = new Bounds(
@@ -589,7 +759,24 @@
 	            // bubble up the request to the parent
 	            this.parent.invalidate(damagedArea, source);
 	        }
-	    }
+	    },
+
+	    addEventListener : function(eventType, listener){
+	        if(!this.listeners[eventType]){
+	            this.listeners[eventType] = [];
+	        }
+	        this.listeners[eventType].push(listener);
+	    },
+
+	    raise : function(source, eventType, args){
+	        if(this.listeners[eventType]){
+	            for(let l of this.listeners[eventType]){
+	                l(source, args);
+	            }
+	        }
+	    },
+
+
 	});
 
 	/**
@@ -629,37 +816,171 @@
 	        return this.bounds;
 	    },
 
-	    setBackgroundColor: function(color){
-	        this.background.setColor(color);
+	    setTextColor: function(color){
+	        this.text.setColor(color);
 	        return this;
 	    },
 
-	    getBackgroundColor: function(){
-	        return this.background.getColor();
+	    getTextColor: function(){
+	        return this.text.getColor();
 	    },
 
-	    setBorderLineWidth: function(width){
-	        this.border.setLineWidth(width);
+	    setText: function(text){
+	        this.text.setText(text);
+	        return this;
+	    },
+
+	    getText: function(){
+	        return this.text.getText();
+	    },
+
+	    setFont: function(font){
+	        this.text.setFont(font);
+	        return this;
+	    },
+
+	    getFont: function(){
+	        return this.text.getFont();
+	    },
+
+	    paint: function(g, r){
+	        r = r || this.bounds;
+	        this.background.paint(g, r);
+	        this.border.paint(g, r);
+	        this.text.paint(g, r);
+	    },
+	});
+
+	/**
+	 * @author Davide Spano
+	 */
+
+	function GridPanel(){
+	    View.call(this);
+	    this.padding = 0;
+	    this.rows = 0;
+	    this.cols = 0;
+	}
+
+	GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
+
+	    constructor: GridPanel,
+
+	    setRows: function(rows){
+	        this.rows = rows;
+	        this.updateBounds();
+	        return this;
+	    },
+
+	    getRows: function(){
+	        return this.rows;
+	    },
+
+	    setCols: function(cols){
+	        this.cols = cols;
+	        this.updateBounds();
+	        return this;
+	    },
+
+	    getCols: function(){
+	        return this.cols;
+	    },
+
+	    setBounds: function (bounds){
+	        View.prototype.setBounds.call(this, bounds);
+	        this.updateBounds();
+	        return this;
+	    },
+
+	    addChild: function(child, row, col, rowSpan, colSpan){
+	        row = row || child.row || 0;
+	        col = col || child.col || 0;
+	        rowSpan = rowSpan || child.rowSpan || 1;
+	        colSpan = colSpan || child.colSpan || 1;
+
+	        if(row < 0) row = 0;
+	        if(col < 0) col = 0;
+	        if(row >= this.rows) row = this.rows -1;
+	        if(col >= this.cols) col = this.cols - 1;
+	        if(rowSpan < 1) rowSpan = 1;
+	        if(colSpan < 1) colSpan = 1;
+
+	        child.row = row;
+	        child.col = col;
+	        child.rowSpan = rowSpan;
+	        child.colSpan = colSpan;
+
+	        View.prototype.addChild.call(this, child);
+	        this.updateBounds();
+
+	        return this;
+	    },
+
+
+	    setPadding: function(padding){
+	        this.padding = padding;
+	        return this;
+	    },
+
+	    getPadding: function(){
+	        return this.padding;
+	    },
+
+	    updateBounds: function(){
+	        let rh = this.bounds.h / this.rows;
+	        let cw = this.bounds.w / this.cols;
+	        for(let i in this.children) {
+	            let c = this.children[i];
+	            let b = new Bounds(
+	                c.col * cw,
+	                c.row * rh,
+	                cw * c.colSpan,
+	                rh * c.rowSpan,
+	            );
+	            c.setBounds(b);
+
+	        }
+	    },
+
+	});
+
+	/**
+	 * @author Davide Spano
+	 */
+
+	function Label(bounds){
+	    View.call(this);
+	    this.bounds = bounds || new Bounds();
+	    this.border = new Border();
+	    this.background = new Background();
+	    this.text = new Text();
+	}
+
+	Label.prototype = Object.assign( Object.create( View.prototype ), {
+
+	    constructor: Label,
+
+	    setBounds: function(bounds){
+	        this.bounds = bounds;
+	        this.border.setBounds(new Bounds(0,0, this.bounds.w, this.bounds.h));
 	        this.background.setBounds(new Bounds(
 	            this.border.lineWidth/2,
 	            this.border.lineWidth/2,
 	            this.bounds.w - this.border.lineWidth,
 	            this.bounds.h - this.border.lineWidth));
+	        this.text.setAlign("left");
+	        this.text.setBaseline("middle");
+	        this.text.setPosition(
+	            10,
+	            this.bounds.h/2);
 	        return this;
 	    },
 
-	    getBorderLineWidth: function(){
-	        return this.border.getLineWidth();
+	    getBounds : function(){
+	        return this.bounds;
 	    },
 
-	    setBorderColor: function(color){
-	        this.border.setColor(color);
-	        return this;
-	    },
 
-	    getBorderColor: function(){
-	        return this.border.getColor();
-	    },
 
 	    setTextColor: function(color){
 	        this.text.setColor(color);
@@ -700,16 +1021,9 @@
 
 	    paint: function(g, r){
 	        r = r || this.bounds;
-	        if(this.flickerCount == 0){
-	            this.background.paint(g, r);
-	        }else {
-	            this.border.paint(g, r);
-	            this.text.paint(g, r);
-	        }
-
-	        this.flickerCount = (this.flickerCount + 1) % 2;
-
-
+	        this.background.paint(g, r);
+	        this.border.paint(g, r);
+	        this.text.paint(g, r);
 	    },
 	});
 
@@ -717,34 +1031,15 @@
 	 * @author Davide Spano
 	 */
 
-	function GridPanel(){
+	function StackPanel(style){
 	    View.call(this);
+	    this.style = (style === "vertical" || style === "horizontal")? style : "vertical";
 	    this.padding = 0;
-	    this.rows = 0;
-	    this.cols = 0;
 	}
 
-	GridPanel.prototype = Object.assign( Object.create( View.prototype ), {
+	StackPanel.prototype = Object.assign( Object.create( View.prototype ), {
 
-	    constructor: GridPanel,
-
-	    setRows: function(rows){
-	        this.rows = rows;
-	        return this;
-	    },
-
-	    getRows: function(){
-	        return this.rows;
-	    },
-
-	    setCols: function(cols){
-	        this.cols = cols;
-	        return this;
-	    },
-
-	    getCols: function(){
-	        return this.cols;
-	    },
+	    constructor: StackPanel,
 
 	    setBounds: function (bounds){
 	        View.prototype.setBounds.call(this, bounds);
@@ -752,21 +1047,7 @@
 	        return this;
 	    },
 
-	    addChild: function(child, row, col, rowSpan, colSpan){
-	        row = row || 0;
-	        col = col || 0;
-	        if(row < 0) row = 0;
-	        if(col < 0) col = 0;
-	        if(row >= this.rows) row = this.rows -1;
-	        if(col >= this.cols) col = this.cols - 1;
-	        if(rowSpan < 1) rowSpan = 1;
-	        if(colSpan < 1) colSpan = 1;
-
-	        child.row = row;
-	        child.col = col;
-	        child.rowSpan = rowSpan;
-	        child.colSpan = colSpan;
-
+	    addChild: function(child){
 	        View.prototype.addChild.call(this, child);
 
 	        // not optimized, we can speed-up setting the bounds of the last child.
@@ -775,6 +1056,14 @@
 	        return this;
 	    },
 
+	    setStyle : function(style){
+	        this.style = (style === "vertical" || style === "horizontal")? style : "vertical";
+	        return this;
+	    },
+
+	    getStyle : function(){
+	        return this.style;
+	    },
 
 	    setPadding: function(padding){
 	        this.padding = padding;
@@ -786,18 +1075,20 @@
 	    },
 
 	    updateBounds: function(){
-	        let rh = this.bounds.h / this.rows;
-	        let cw = this.bounds.w / this.cols;
+	        let next = 0;
 	        for(let i in this.children) {
 	            let c = this.children[i];
-	            let b = new Bounds(
-	                c.col * cw,
-	                c.row * rh,
-	                cw * c.colSpan,
-	                rh * c.rowSpan,
-	            );
-	            c.setBounds(b);
+	            switch(this.style){
+	                case "vertical":
+	                    c.setBounds(new Bounds(0, next, this.bounds.w, c.bounds.h));
+	                    next += c.bounds.h + this.padding;
+	                    break;
 
+	                case "horizontal":
+	                    c.setBounds(new Bounds(next, 0, c.bounds.w, this.bounds.h));
+	                    next += c.bounds.w + this.padding;
+	                    break;
+	            }
 	        }
 	    },
 
@@ -916,73 +1207,6 @@
 	    },
 	});
 
-	/**
-	 * @author Davide Spano
-	 */
-
-	function StackPanel(style){
-	    View.call(this);
-	    this.style = (style === "vertical" || style === "horizontal")? style : "vertical";
-	    this.padding = 0;
-	}
-
-	StackPanel.prototype = Object.assign( Object.create( View.prototype ), {
-
-	    constructor: StackPanel,
-
-	    setBounds: function (bounds){
-	        View.prototype.setBounds.call(this, bounds);
-	        this.updateBounds();
-	        return this;
-	    },
-
-	    addChild: function(child){
-	        View.prototype.addChild.call(this, child);
-
-	        // not optimized, we can speed-up setting the bounds of the last child.
-	        this.updateBounds();
-
-	        return this;
-	    },
-
-	    setStyle : function(style){
-	        this.style = (style === "vertical" || style === "horizontal")? style : "vertical";
-	        return this;
-	    },
-
-	    getStyle : function(){
-	        return this.style;
-	    },
-
-	    setPadding: function(padding){
-	        this.padding = padding;
-	        return this;
-	    },
-
-	    getPadding: function(){
-	        return this.padding;
-	    },
-
-	    updateBounds: function(){
-	        let next = 0;
-	        for(let i in this.children) {
-	            let c = this.children[i];
-	            switch(this.style){
-	                case "vertical":
-	                    c.setBounds(new Bounds(0, next, this.bounds.w, c.bounds.h));
-	                    next += c.bounds.h + this.padding;
-	                    break;
-
-	                case "horizontal":
-	                    c.setBounds(new Bounds(next, 0, c.bounds.w, this.bounds.h));
-	                    next += c.bounds.w + this.padding;
-	                    break;
-	            }
-	        }
-	    },
-
-	});
-
 	class ViewElement extends HTMLElement{
 
 	    constructor() {
@@ -1025,9 +1249,46 @@
 	                case 'name':
 	                    this.name = attr.value;
 	                    break;
+
+	                case 'background-color':
+	                    this.backgroundColor = attr.value;
+	                    break;
+
+	                case 'border-line-width':
+	                    this.borderLineWidth = attr.value;
+	                    break;
+
+	                case 'border-rounded':
+	                    this.borderRounded = attr.value;
+	                    break;
+
+	                case 'border-color':
+	                    this.borderColor = attr.value;
+	                    break;
+
+	                    // trick for managing grid panels
+	                case 'row':
+	                    this.buiView.row = Number(attr.value);
+	                    break;
+
+	                case 'col':
+	                    this.buiView.col = Number(attr.value);
+	                    break;
+
+	                case 'row-span':
+	                    this.buiView.rowSpan = Number(attr.value);
+	                    break;
+
+	                case 'col-span':
+	                    this.buiView.colSpan = Number(attr.value);
+	                    break;
 	            }
 
 	        }
+	    }
+
+	    get view(){
+	        return this.buiView;
 	    }
 
 	    set name(val){
@@ -1084,54 +1345,6 @@
 	        return this.buiView.getBounds().h;
 	    }
 
-
-	}
-
-	window.customElements.define('bui-view', ViewElement);
-
-	class ButtonElement extends ViewElement{
-
-	    constructor() {
-	        super();
-	        this.buiView = new Button();
-	    }
-
-	    connectedCallback() {
-	        super.connectedCallback();
-
-	        for(let attr of this.attributes){
-	            switch (attr.name) {
-	                case 'background-color':
-	                    this.backgroundColor = attr.value;
-	                    break;
-
-	                case 'border-line-width':
-	                    this.borderLineWidth = attr.value;
-	                    break;
-
-	                case 'border-rounded':
-	                    this.borderRounded = attr.value;
-	                    break;
-
-	                case 'border-color':
-	                    this.borderColor = attr.value;
-	                    break;
-
-	                case 'font':
-	                    this.font = attr.value;
-	                    break;
-
-	                case 'text':
-	                    this.text = attr.value;
-	                    break;
-
-	                case 'text-color':
-	                    this.textColor = attr.value;
-	                    break;
-	            }
-	        }
-	    }
-
 	    set backgroundColor(val){
 	        if(val){
 	            this.buiView.setBackgroundColor(val);
@@ -1158,10 +1371,6 @@
 	        }
 	    }
 
-	    get borderColor(){
-	        return this.buiView.getBorderColor();
-	    }
-
 	    set borderRounded(val){
 	        if(val){
 	            this.buiView.setBorderRounded(Number(val));
@@ -1171,6 +1380,41 @@
 	    get borderRounded(){
 	        return this.buiView.getBorderRounded();
 	    }
+
+
+	}
+
+	window.customElements.define('bui-view', ViewElement);
+
+	class ButtonElement extends ViewElement{
+
+	    constructor() {
+	        super();
+	        this.buiView = new Button();
+	    }
+
+	    connectedCallback() {
+	        super.connectedCallback();
+
+	        for(let attr of this.attributes){
+	            switch (attr.name) {
+
+	                case 'font':
+	                    this.font = attr.value;
+	                    break;
+
+	                case 'text':
+	                    this.text = attr.value;
+	                    break;
+
+	                case 'text-color':
+	                    this.textColor = attr.value;
+	                    break;
+	            }
+	        }
+	    }
+
+
 
 	    set text(val){
 	        if(val){
@@ -1204,6 +1448,118 @@
 	}
 
 	window.customElements.define('bui-button', ButtonElement);
+
+	class GridPanelElement extends ViewElement{
+
+	    constructor() {
+	        super();
+	        this.buiView = new GridPanel();
+	    }
+
+	    connectedCallback() {
+	        super.connectedCallback();
+
+	        for(let attr of this.attributes){
+	            switch (attr.name) {
+	                case 'rows':
+	                    this.rows = attr.value;
+	                    break;
+
+	                case 'cols':
+	                    this.cols = attr.value;
+	                    break;
+
+	                case 'padding':
+	                    this.padding = attr.value;
+	                    break;
+	            }
+	        }
+	    }
+
+	    set rows(val){
+	        if(val){
+	            this.buiView.setRows(Number(val));
+	        }
+	    }
+
+	    get rows(){
+	        return this.buiView.getRows();
+	    }
+
+	    set cols(val){
+	        if(val){
+	            this.buiView.setCols(Number(val));
+	        }
+	    }
+
+	    get cols(){
+	        return this.buiView.getCols();
+	    }
+	}
+	window.customElements.define('bui-grid-panel', GridPanelElement);
+
+	class LabelElement extends ViewElement{
+
+	    constructor() {
+	        super();
+	        this.buiView = new Label();
+	    }
+
+	    connectedCallback() {
+	        super.connectedCallback();
+
+	        for(let attr of this.attributes){
+	            switch (attr.name) {
+
+
+	                case 'font':
+	                    this.font = attr.value;
+	                    break;
+
+	                case 'text':
+	                    this.text = attr.value;
+	                    break;
+
+	                case 'text-color':
+	                    this.textColor = attr.value;
+	                    break;
+	            }
+	        }
+	    }
+
+
+	    set text(val){
+	        if(val){
+	            this.buiView.setText(val);
+	        }
+	    }
+
+	    get text(){
+	        return this.buiView.getText();
+	    }
+
+	    set textColor(val){
+	        if(val){
+	            this.buiView.setTextColor(val);
+	        }
+	    }
+
+	    get textColor(){
+	        return this.buiView.getTextColor();
+	    }
+
+	    set font(val){
+	        if(val){
+	            this.buiView.setFont(val);
+	        }
+	    }
+
+	    get font(){
+	        return this.buiView.getFont();
+	    }
+	}
+
+	window.customElements.define('bui-label', LabelElement);
 
 	class StackPanelElement extends ViewElement{
 
@@ -1250,17 +1606,85 @@
 	}
 	window.customElements.define('bui-stack-panel', StackPanelElement);
 
+	class TextFieldElement extends ViewElement{
+
+	    constructor() {
+	        super();
+	        this.buiView = new TextField();
+	    }
+
+	    connectedCallback() {
+	        super.connectedCallback();
+
+	        for(let attr of this.attributes){
+	            switch (attr.name) {
+
+	                case 'font':
+	                    this.font = attr.value;
+	                    break;
+
+	                case 'text':
+	                    this.text = attr.value;
+	                    break;
+
+	                case 'text-color':
+	                    this.textColor = attr.value;
+	                    break;
+	            }
+	        }
+	    }
+
+
+
+	    set text(val){
+	        if(val){
+	            this.buiView.setText(val);
+	        }
+	    }
+
+	    get text(){
+	        return this.buiView.getText();
+	    }
+
+	    set textColor(val){
+	        if(val){
+	            this.buiView.setTextColor(val);
+	        }
+	    }
+
+	    get textColor(){
+	        return this.buiView.getTextColor();
+	    }
+
+	    set font(val){
+	        if(val){
+	            this.buiView.setFont(val);
+	        }
+	    }
+
+	    get font(){
+	        return this.buiView.getFont();
+	    }
+	}
+
+	window.customElements.define('bui-text-field', TextFieldElement);
+
 	exports.App = App;
 	exports.Background = Background;
 	exports.Border = Border;
 	exports.Bounds = Bounds;
 	exports.Button = Button;
 	exports.ButtonElement = ButtonElement;
+	exports.EventTypes = EventTypes;
 	exports.GridPanel = GridPanel;
+	exports.GridPanelElement = GridPanelElement;
+	exports.Label = Label;
+	exports.LabelElement = LabelElement;
 	exports.StackPanel = StackPanel;
 	exports.StackPanelElement = StackPanelElement;
 	exports.Text = Text;
 	exports.TextField = TextField;
+	exports.TextFieldElement = TextFieldElement;
 	exports.View = View;
 	exports.ViewElement = ViewElement;
 

@@ -42,9 +42,46 @@ class ViewElement extends HTMLElement{
                 case 'name':
                     this.name = attr.value;
                     break;
+
+                case 'background-color':
+                    this.backgroundColor = attr.value;
+                    break;
+
+                case 'border-line-width':
+                    this.borderLineWidth = attr.value;
+                    break;
+
+                case 'border-rounded':
+                    this.borderRounded = attr.value;
+                    break;
+
+                case 'border-color':
+                    this.borderColor = attr.value;
+                    break;
+
+                    // trick for managing grid panels
+                case 'row':
+                    this.buiView.row = Number(attr.value);
+                    break;
+
+                case 'col':
+                    this.buiView.col = Number(attr.value);
+                    break;
+
+                case 'row-span':
+                    this.buiView.rowSpan = Number(attr.value);
+                    break;
+
+                case 'col-span':
+                    this.buiView.colSpan = Number(attr.value);
+                    break;
             }
 
         }
+    }
+
+    get view(){
+        return this.buiView;
     }
 
     set name(val){
@@ -99,6 +136,42 @@ class ViewElement extends HTMLElement{
 
     get h(){
         return this.buiView.getBounds().h;
+    }
+
+    set backgroundColor(val){
+        if(val){
+            this.buiView.setBackgroundColor(val);
+        }
+    }
+
+    get backgroundColor(){
+        return this.buiView.getBackgroundColor();
+    }
+
+    set borderLineWidth(val){
+        if(val){
+            this.buiView.setBorderLineWidth(Number(val));
+        }
+    }
+
+    get borderLineWidth(){
+        return this.buiView.getBorderLineWidth();
+    }
+
+    set borderColor(val){
+        if(val){
+            this.buiView.setBorderColor(val);
+        }
+    }
+
+    set borderRounded(val){
+        if(val){
+            this.buiView.setBorderRounded(Number(val));
+        }
+    }
+
+    get borderRounded(){
+        return this.buiView.getBorderRounded();
     }
 
 

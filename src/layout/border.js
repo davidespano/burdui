@@ -5,10 +5,10 @@ import {Bounds} from "./bounds";
 import {Utils} from "./utils";
 
 function Border( bounds, color, lineWidth, rounded){
-    this.color = color || "black";
+    this.color = color || "#ffffff00";
     this.bounds = bounds || new Bounds();
     this.rounded = rounded || 0;
-    this.lineWidth = lineWidth || 1;
+    this.lineWidth = lineWidth || 0;
 }
 
 Object.assign( Border.prototype, {
@@ -56,10 +56,13 @@ Object.assign( Border.prototype, {
         g.beginPath();
         g.rect(r.x, r.y, r.w, r.h);
         g.clip();
-        g.strokeStyle = this.color;
-        g.lineWidth = this.lineWidth;
-        Utils.createRoundedRect(g, this.rounded, this.bounds);
-        g.stroke();
+        if(this.lineWidth >0){
+            g.strokeStyle = this.color;
+            g.lineWidth = this.lineWidth;
+            Utils.createRoundedRect(g, this.rounded, this.bounds);
+            g.stroke();
+        }
+
         g.restore();
     },
 

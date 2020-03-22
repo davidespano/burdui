@@ -1,11 +1,11 @@
 import {ViewElement} from "./viewElement";
-import {Button} from "../views/button";
+import {Label} from "../views/label";
 
-class ButtonElement extends ViewElement{
+class LabelElement extends ViewElement{
 
     constructor() {
         super();
-        this.buiView = new Button();
+        this.buiView = new Label();
     }
 
     connectedCallback() {
@@ -13,6 +13,7 @@ class ButtonElement extends ViewElement{
 
         for(let attr of this.attributes){
             switch (attr.name) {
+
 
                 case 'font':
                     this.font = attr.value;
@@ -28,7 +29,6 @@ class ButtonElement extends ViewElement{
             }
         }
     }
-
 
 
     set text(val){
@@ -62,6 +62,6 @@ class ButtonElement extends ViewElement{
     }
 }
 
-window.customElements.define('bui-button', ButtonElement);
+window.customElements.define('bui-label', LabelElement);
 
-export {ButtonElement};
+export {LabelElement};

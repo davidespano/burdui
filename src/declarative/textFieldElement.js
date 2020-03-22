@@ -1,11 +1,11 @@
 import {ViewElement} from "./viewElement";
-import {Button} from "../views/button";
+import {TextField} from "../views/textField";
 
-class ButtonElement extends ViewElement{
+class TextFieldElement extends ViewElement{
 
     constructor() {
         super();
-        this.buiView = new Button();
+        this.buiView = new TextField();
     }
 
     connectedCallback() {
@@ -62,6 +62,6 @@ class ButtonElement extends ViewElement{
     }
 }
 
-window.customElements.define('bui-button', ButtonElement);
+window.customElements.define('bui-text-field', TextFieldElement);
 
-export {ButtonElement};
+export {TextFieldElement};
