@@ -19,7 +19,6 @@ function App(canvas, tree){
     this.primaryBtn = 0;
     this.secondaryBtn = 0;
 
-    this.clickThreshold = 100;
     this.moveThreshold = 10;
 
     this.buttonPressed = -1;
@@ -104,13 +103,11 @@ Object.assign( App.prototype, {
                 case EventTypes.mouseUp:
                     evt.source.raise(evt.source, EventTypes.mouseUp, evt.args);
                     if(this.buttonPressed == 1 &&
-                        this.primaryBtn - evt.args.time < this.clickThreshold &&
                         Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
                         Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
                         evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
                     }
                     if(this.buttonPressed == 2 &&
-                        this.secondaryBtn - evt.args.time < this.clickThreshold &&
                         Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
                         Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
                         evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
