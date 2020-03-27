@@ -9,11 +9,15 @@
 	    mouseMove: 1,
 	    mouseDown: 2,
 	    mouseUp: 3,
+	    keyDown: 4,
+	    keyUp: 5,
 
 	    mouseClick: 100,
 	    mouseDoubleClick: 101,
 	    mouseEnter: 102,
 	    mouseLeave: 103,
+	    getFocus: 104,
+	    lostFocus:105,
 	};
 
 	function Event(source, type, args){
@@ -210,10 +214,11 @@
 	    this.primaryBtn = 0;
 	    this.secondaryBtn = 0;
 
-	    this.clickThreshold = 100;
+
 	    this.moveThreshold = 10;
 
 	    this.buttonPressed = -1;
+	    this.focus = null;
 
 	}
 
@@ -244,6 +249,20 @@
 	                let test = this.hitTest(e);
 	                if(test.view){
 	                    let evt = new Event(test.view, EventTypes.mouseUp, test.args);
+	                    this.q.push(evt);
+	                }
+	            });
+
+	            this.canvas.addEventListener('keydown', e =>{
+	                if(this.focus){
+	                    let evt = new Event(this.focus, EventTypes.keyDown, e);
+	                    this.q.push(evt);
+	                }
+	            });
+
+	            this.canvas.addEventListener('keyup', e => {
+	                if(this.focus){
+	                    let evt = new Event(this.focus, EventTypes.keyUp, e);
 	                    this.q.push(evt);
 	                }
 	            });
@@ -294,18 +313,33 @@
 	                case EventTypes.mouseUp:
 	                    evt.source.raise(evt.source, EventTypes.mouseUp, evt.args);
 	                    if(this.buttonPressed == 1 &&
-	                        this.primaryBtn - evt.args.time < this.clickThreshold &&
 	                        Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
 	                        Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
 	                        evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
+	                        // set focus on clicked view
+	                        if(this.focus){
+	                            this.focus.raise(this.focus, EventTypes.lostFocus, {});
+	                        }
+	                        this.focus = evt.source;
+	                        this.focus.raise(evt.source, EventTypes.getFocus, {});
 	                    }
 	                    if(this.buttonPressed == 2 &&
-	                        this.secondaryBtn - evt.args.time < this.clickThreshold &&
 	                        Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
 	                        Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
 	                        evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
 	                    }
 	                    this.buttonPressed = -1;
+	                    break;
+
+	                case EventTypes.keyDown:
+	                    if(this.focus){
+	                        this.focus.raise(evt.source, EventTypes.keyDown, evt.args);
+	                    }
+	                    break;
+	                case EventTypes.keyUp:
+	                    if(this.focus){
+	                        this.focus.raise(evt.source, EventTypes.keyUp, evt.args);
+	                    }
 	                    break;
 	            }
 	        }
@@ -745,8 +779,7 @@
 
 	    invalidate : function(r, source){
 	        source = source || this;
-	        r = r || this.bounds;
-
+	        r = r || new Bounds(0,0, this.bounds.w, this.bounds.h);
 	        if(this.parent != null){
 	            // move to the parent reference system
 	            let damagedArea = new Bounds(
@@ -1104,6 +1137,28 @@
 	    this.border = new Border();
 	    this.background = new Background();
 	    this.text = new Text();
+
+	    let self = this;
+	    this.addEventListener(EventTypes.keyDown, function(source, args){
+	        switch (args.key) {
+	            case "Shift":
+	            case "Meta":
+	            case "ArrowLeft":
+	            case "ArrowRight":
+	            case "ArrowUp":
+	            case "ArrowDown":
+	                break;
+	            case "Backspace":
+	                self.setText(self.getText().slice(0, -1));
+	                self.invalidate();
+	                break;
+	            default:
+	                self.setText(self.getText() + args.key);
+	                self.invalidate();
+	                break;
+
+	        }
+	    });
 	}
 
 	TextField.prototype = Object.assign( Object.create( View.prototype ), {

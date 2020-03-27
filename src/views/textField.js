@@ -7,6 +7,7 @@ import {Border} from "../layout/border";
 import {Background} from "../layout/background";
 import {Bounds} from "../layout/bounds";
 import {Text} from "../layout/text";
+import {EventTypes} from "../event";
 
 function TextField(bounds){
     View.call(this);
@@ -14,6 +15,28 @@ function TextField(bounds){
     this.border = new Border();
     this.background = new Background();
     this.text = new Text();
+
+    let self = this;
+    this.addEventListener(EventTypes.keyDown, function(source, args){
+        switch (args.key) {
+            case "Shift":
+            case "Meta":
+            case "ArrowLeft":
+            case "ArrowRight":
+            case "ArrowUp":
+            case "ArrowDown":
+                break;
+            case "Backspace":
+                self.setText(self.getText().slice(0, -1));
+                self.invalidate();
+                break;
+            default:
+                self.setText(self.getText() + args.key);
+                self.invalidate();
+                break;
+
+        }
+    });
 }
 
 TextField.prototype = Object.assign( Object.create( View.prototype ), {

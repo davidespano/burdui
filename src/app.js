@@ -19,9 +19,11 @@ function App(canvas, tree){
     this.primaryBtn = 0;
     this.secondaryBtn = 0;
 
+
     this.moveThreshold = 10;
 
     this.buttonPressed = -1;
+    this.focus = null;
 
 }
 
@@ -53,6 +55,20 @@ Object.assign( App.prototype, {
                 let test = this.hitTest(e);
                 if(test.view){
                     let evt = new Event(test.view, EventTypes.mouseUp, test.args);
+                    this.q.push(evt);
+                }
+            });
+
+            this.canvas.addEventListener('keydown', e =>{
+                if(this.focus){
+                    let evt = new Event(this.focus, EventTypes.keyDown, e);
+                    this.q.push(evt);
+                }
+            });
+
+            this.canvas.addEventListener('keyup', e => {
+                if(this.focus){
+                    let evt = new Event(this.focus, EventTypes.keyUp, e);
                     this.q.push(evt);
                 }
             });
@@ -106,6 +122,12 @@ Object.assign( App.prototype, {
                         Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
                         Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
                         evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
+                        // set focus on clicked view
+                        if(this.focus){
+                            this.focus.raise(this.focus, EventTypes.lostFocus, {});
+                        }
+                        this.focus = evt.source;
+                        this.focus.raise(evt.source, EventTypes.getFocus, {});
                     }
                     if(this.buttonPressed == 2 &&
                         Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
@@ -113,6 +135,17 @@ Object.assign( App.prototype, {
                         evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
                     }
                     this.buttonPressed = -1;
+                    break;
+
+                case EventTypes.keyDown:
+                    if(this.focus){
+                        this.focus.raise(evt.source, EventTypes.keyDown, evt.args);
+                    }
+                    break;
+                case EventTypes.keyUp:
+                    if(this.focus){
+                        this.focus.raise(evt.source, EventTypes.keyUp, evt.args);
+                    }
                     break;
             }
         }

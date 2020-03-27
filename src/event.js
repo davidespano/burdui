@@ -3,11 +3,15 @@ const EventTypes = {
     mouseMove: 1,
     mouseDown: 2,
     mouseUp: 3,
+    keyDown: 4,
+    keyUp: 5,
 
     mouseClick: 100,
     mouseDoubleClick: 101,
     mouseEnter: 102,
     mouseLeave: 103,
+    getFocus: 104,
+    lostFocus:105,
 };
 
 function Event(source, type, args){
