@@ -16,9 +16,13 @@ Clone or download the repository and run
 The library compiles into a single JavaScript file, which is 
 unfortunately not minimised (remember, it's low quality).
 
-For building the library just run
+For building the library on Linux or MacOS please use
 
     npm run-script build
+    
+On Windows please use
+
+    npm run-script build-win
     
 The output is available in `build/burdui.js` 
 
