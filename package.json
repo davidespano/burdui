@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c utils/rollup.config.js && cp build/burdui.js examples/js/burdui.js",
+    "build-win" : "rollup -c utils/rollup.config.js && copy build\\burdui.js examples\\js\\burdui.js",
     "start": "npm run-script build && http-server examples"
   },
   "keywords": [],
