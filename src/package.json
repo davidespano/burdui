@@ -1,0 +1,19 @@
+{
+  "name": "burdui",
+  "version": "0.0.1",
+  "description": "A toy library for demonstrating the implementation of a window toolkit",
+  "main": "build/burdui.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c utils/rollup.config.js && cp build/burdui.js examples/js/burdui.js",
+    "build-win" : "rollup -c utils/rollup.config.js && copy build\\burdui.js examples\\js\\burdui.js",
+    "start": "npm run-script build && http-server examples"
+  },
+  "keywords": [],
+  "author": "Davide Spano",
+  "license": "ISC",
+  "dependencies": {
+    "http-server": "^0.12.1",
+    "rollup": "^2.0.3"
+  }
+}
