@@ -27,7 +27,7 @@ window.onload = function(){
                    }    
              }
         } 
-        Select(source);
+        selected(source);
         source.invalidate();
     };
     loginBtn.addEventListener(burdui.EventTypes.mouseUp, function(source, args){
@@ -54,7 +54,7 @@ window.onload = function(){
         source.setText(source.getText() + args.key);
         source.invalidate();
     };
-       let Select = function (source){
+       let selected = function (source){
         source.setSelect(1);
         source.setBackgroundColor("#000000");   
     };
