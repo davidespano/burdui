@@ -323,7 +323,7 @@
 	                        this.focus = evt.source;
 	                        this.focus.raise(evt.source, EventTypes.getFocus, {});
 	                    }
-	                    if(this.buttonPressed == 2 &&
+	                 if(this.buttonPressed == 2 &&
 	                        Math.abs(this.pointer.x - evt.args.screenX) < this.moveThreshold &&
 	                        Math.abs(this.pointer.y - evt.args.screenY) < this.moveThreshold){
 	                        evt.source.raise(evt.source, EventTypes.mouseClick, evt.args);
@@ -811,11 +811,96 @@
 
 
 	});
+/**
+ * @author Davide Spano
+ */
 
-	/**
-	 * @author Davide Spano
-	 */
 
+function radioButton(bounds){
+    View.call(this);
+    this.bounds = bounds || new Bounds();
+    this.border = new Border();
+    this.background = new Background();
+    this.text = new Text();
+    this.flickerCount = 0;
+    this.selecte=0;
+    
+ 
+}
+
+radioButton.prototype = Object.assign( Object.create( View.prototype ), {
+
+    constructor: radioButton,
+
+      setBounds: function(bounds){
+        this.bounds = bounds;
+        this.border.setBounds(new Bounds(0,0, 30, 30));
+        this.background.setBounds(new Bounds(0,0,25,25));
+        this.text.setAlign("left");
+        this.text.setBaseline("middle");
+        this.text.setPosition(
+             35,
+             30/2);
+        return this;
+    },
+
+    getBounds : function(){
+        return this.bounds;
+    },
+
+    setTextColor: function(color){
+        this.text.setColor(color);
+        return this;
+    },
+    setClick: function(){
+        this.flickerCount++;
+        return this;
+    },
+    getClick: function(){
+        return this.flickerCount;
+    },
+
+    getTextColor: function(){
+        return this.text.getColor();
+    },
+
+    setText: function(text){
+        this.text.setText(text);
+        return this;
+    },
+
+    getText: function(){
+        return this.text.getText();
+    },
+
+    setFont: function(font){
+        this.text.setFont(font);
+        return this;
+    },
+
+    getFont: function(){
+        return this.text.getFont();
+    },
+    setSelect: function(num){ 
+        
+        this.selecte=num;   
+        return this;
+    },
+
+    getSelect: function(){
+        return this.selecte;
+    },
+    
+
+    paint: function(g, r){
+        r = r || this.bounds;
+        this.background.paint(g, r);
+        this.border.paint(g, r);
+        this.text.paint(g, r);
+    }
+});
+
+   
 	function Button(bounds){
 	    View.call(this);
 	    this.bounds = bounds || new Bounds();
@@ -837,7 +922,7 @@
 	            this.border.lineWidth/2,
 	            this.bounds.w - this.border.lineWidth,
 	            this.bounds.h - this.border.lineWidth));
-	        this.text.setAlign("center");
+	        this.text.setAlign("left");
 	        this.text.setBaseline("middle");
 	        this.text.setPosition(
 	             this.bounds.w/2,
@@ -1440,6 +1525,70 @@
 	}
 
 	window.customElements.define('bui-view', ViewElement);
+      
+class RadioButtonElement extends ViewElement{
+
+    constructor() {
+        super();
+        this.buiView = new radioButton();
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+
+        for(let attr of this.attributes){
+            switch (attr.name) {
+
+                case 'font':
+                    this.font = attr.value;
+                    break;
+
+                case 'text':
+                    this.text = attr.value;
+                    break;
+
+                case 'text-color':
+                    this.textColor = attr.value;
+                    break;
+            }
+        }
+    }
+
+
+
+    set text(val){
+        if(val){
+            this.buiView.setText(val);
+        }
+    }
+
+    get text(){
+        return this.buiView.getText();
+    }
+
+    set textColor(val){
+        if(val){
+            this.buiView.setTextColor(val);
+        }
+    }
+
+    get textColor(){
+        return this.buiView.getTextColor();
+    }
+
+    set font(val){
+        if(val){
+            this.buiView.setFont(val);
+        }
+    }
+
+    get font(){
+        return this.buiView.getFont();
+    }
+}
+
+window.customElements.define('bui-radiobutton', RadioButtonElement);
+
 
 	class ButtonElement extends ViewElement{
 
@@ -1742,7 +1891,8 @@
 	exports.TextFieldElement = TextFieldElement;
 	exports.View = View;
 	exports.ViewElement = ViewElement;
-
+        exports.RadioButtonElement= RadioButtonElement;
+        exports.radioButton=radioButton;
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
