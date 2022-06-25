@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>burdUI: Declarative StackPanel</title>
+    <script src="js/burdui.js"></script>
+    <script src="js/input-1.js"></script>
+</head>
+<body>
+
+<canvas id="screen" width="1024" height="768" tabindex="0">
+
+</canvas>
+
+<bui-grid-panel id="root" name="root" x="0" y="0" w="1024" h="768" rows="6" cols="4"
+                background-color="white">
+    <bui-stack-panel id="header" name="header" row="0" col="0" row-span="1" col-span="4"
+                     background-color="#259" stack-style="horizontal">
+        <bui-label id="title" name="title" w="300" text="Input Test Page"
+                   text-color="white" background-color="transparent"/>
+    </bui-stack-panel>
+    <bui-stack-panel id="left-menu" name="left-menu" x="0" y="0" row="1" col="0" row-span="4" col-span="1"
+                     border-color="#259" stack-style="vertical" border-line-width="2" >
+        <bui-label id="link1" name="link1" h="75" text="Ateneo"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+        <bui-label id="link2" name="link2" h="75" text="Futuri Studenti"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+        <bui-label id="link3" name="link3" h="75" text="Studenti"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+        <bui-label id="link4" name="link4" h="75" text="Laureati"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+        <bui-label id="link5" name="link5" h="75" text="Ricerca"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+        <bui-label id="link6" name="link6" h="75" text="Enti e imprese"
+                   text-color="#0d1024" background-color="transparent" font="16px Arial"></bui-label>
+    </bui-stack-panel>
+    <bui-stack-panel id="main" name="main" x="0" y="0" row="1" col="1" row-span="4" col-span="3"
+                     border-color="#259" stack-style="vertical" border-line-width="2" >
+        <bui-label id="loginLabel" name="loginLabel" x="0" y="0" h="100" text="Autenticazione"
+                   text-color="#b70718" background-color="transparent" font="30px Arial"></bui-label>
+        <bui-stack-panel id="usrGroup" name="usrGroup" h="50" stack-style="horizontal">
+            <bui-label id="usrLabel" name="usrLabel" x="0" y="0" w="150" text="Nome utente"
+                       text-color="#666666" background-color="transparent" font="18px Arial"></bui-label>
+            <bui-text-field id="usr" name="usr"  w="300" background-color="#efefef" border-line-width="3"
+                            border-rounded="10" border-color="#666666"></bui-text-field>
+        </bui-stack-panel>
+        <bui-stack-panel id="pswGroup" name="pswGroup" h="50" stack-style="horizontal">
+            <bui-label id="pswLabel" name="pswLabel" x="0" y="0" w="150" text="Password"
+                       text-color="#666666" background-color="transparent" font="18px Arial"></bui-label>
+            <bui-text-field id="psw" name="psw"  w="300" background-color="#efefef" border-line-width="3"
+                            border-rounded="10" border-color="#666666"></bui-text-field>
+        </bui-stack-panel>
+        <bui-stack-panel id="loginGroup" name="loginGroup" h="150" stack-style="vertical">
+             <bui-label id="ageLabel" name="edadlab" h="30" text="Età: "
+                   text-color="#666666" background-color="transparent" font="18px Arial"></bui-label>
+            <bui-radiobutton id="edad1" name="age"  h="30" text="Sotto i 18 anni di età" border-line-width="5" text-color="black"
+                    border-color="#8b0000" background-color="white" border-rounded="10" font="18px Arial">></bui-radiobutton>
+            <bui-radiobutton id="edad2" name="age"  h="30" text="18 anni o più" border-line-width="5" text-color="black"
+                    border-color="#8b0000" background-color="white" border-rounded="10" font="18px Arial">></bui-radiobutton>
+            <bui-radiobutton id="a" name="another"  h="30" text="A" border-line-width="5" text-color="black"
+                    border-color="#8b0000" background-color="white" border-rounded="10" font="18px Arial">></bui-radiobutton>
+            <bui-radiobutton id="b" name="another"  h="30" text="B" border-line-width="5" text-color="black"
+                    border-color="#8b0000" background-color="white" border-rounded="10" font="18px Arial">></bui-radiobutton>
+        </bui-stack-panel>
+        <bui-stack-panel id="loginGroup" name="loginGroup" h="50" stack-style="horizontal">
+            <bui-button id="login" name="login" w="450"  text="Accedi" border-line-width="5" text-color="white"
+                    border-color="#8b0000" background-color="#b70718" border-rounded="10"></bui-button>
+        </bui-stack-panel>
+    </bui-stack-panel>
+    <bui-stack-panel id="header" name="header" row="5" col="0" row-span="1" col-span="4"
+                     background-color="#0d1024" stack-style="horizontal">
+        <bui-label id="title" name="title" w="300" text="Footer"
+                   text-color="white" background-color="transparent"/>
+    </bui-stack-panel>
+
+</bui-grid-panel>
+
+</body>
+</html>
