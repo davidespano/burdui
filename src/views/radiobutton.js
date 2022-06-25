@@ -15,7 +15,7 @@ function radioButton(bounds){
     this.background = new Background();
     this.text = new Text();
     this.flickerCount = 0;
-    this.seleccionado=0;
+    this.selecte=0;
 }
 
 radioButton.prototype = Object.assign( Object.create( View.prototype ), {
@@ -71,13 +71,13 @@ radioButton.prototype = Object.assign( Object.create( View.prototype ), {
     getFont: function(){
         return this.text.getFont();
     },
-    setSeleccionado: function(num){
-        this.seleccionado=num;
+    setSelect: function(num){
+        this.selecte=num;
         return this;
     },
 
-    getSeleccionado: function(){
-        return this.seleccionado;
+    getSelect: function(){
+        return this.selecte;
     },
 
     paint: function(g, r){
