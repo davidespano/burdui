@@ -823,7 +823,7 @@ function radioButton(bounds){
     this.background = new Background();
     this.text = new Text();
     this.flickerCount = 0;
-    this.select=0;
+    this.selecte=0;
     
  
 }
@@ -883,12 +883,12 @@ radioButton.prototype = Object.assign( Object.create( View.prototype ), {
     },
     setSelect: function(num){ 
         
-        this.select=num;   
+        this.selecte=num;   
         return this;
     },
 
     getSelect: function(){
-        return this.select;
+        return this.selecte;
     },
     
 
