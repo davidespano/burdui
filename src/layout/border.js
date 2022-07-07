@@ -65,6 +65,18 @@ Object.assign( Border.prototype, {
 
         g.restore();
     },
+    paint2 : function(g, r){
+        g.save();
+        g.beginPath();
+        g.arc(r.x+15, r.y+15, this.radio, 0, Math.PI * 2);
+        g.clip();
+        if(this.lineWidth >0){
+            g.strokeStyle = this.color;
+            g.lineWidth = this.lineWidth;
+            g.stroke();
+        }
+        g.restore();
+    }
 
 });
 

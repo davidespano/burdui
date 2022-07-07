@@ -47,6 +47,16 @@ Object.assign( Background.prototype, {
         g.closePath();
         g.fill();
         g.restore();
+    },
+    paint2 : function(g, r){
+        g.save();
+        g.beginPath();
+        g.arc(r.x+15, r.y+15, this.radio, 0, Math.PI * 2);
+        g.closePath();
+        g.clip();
+        g.fillStyle = this.color;
+        g.fill();
+        g.restore();
     }
 });
 

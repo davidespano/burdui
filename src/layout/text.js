@@ -78,6 +78,18 @@ Object.assign( Text.prototype, {
         g.textBaseline = this.baseline;
         g.fillText(this.text, this.x, this.y);
         g.restore();
+    },
+    paint2: function(g, r){
+        g.save();
+        g.beginPath();
+        g.rect(r.x, r.y, r.w, r.h);
+        g.clip();
+        g.font = this.font;
+        g.fillStyle = this.color;
+        g.textAlign = this.align;
+        g.textBaseline = this.baseline;
+        g.fillText(this.text, this.x, this.y);
+        g.restore();
     }
 });
 
